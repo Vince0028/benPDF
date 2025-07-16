@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-functional Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center min-h-screen p-6 font-sans antialiased text-gray-800">
+
+    <div class="message-box" id="messageBox">
+        <p id="messageText"></p>
+        <button onclick="hideMessageBox()">OK</button>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-4xl w-full space-y-8 border border-gray-200">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-6 text-center tracking-tight">Universal Converter Hub</h1>
+
+        <div class="tabs flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8">
+            <button class="tab-button active" onclick="showSection('imageConverterSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-4 4 4 4-4V5h-4l-3 3-4-4H4v10zm-2 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                Image Converter
+            </button>
+            <button class="tab-button" onclick="showSection('documentConverterSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0113 3.414L16.586 7A2 2 0 0118 8.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1-3a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm1-3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+                Document Converter
+            </button>
+            <button class="tab-button" onclick="showSection('baseConverterSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M12.586 4.586a2 2 0 112.828 2.828l-3.353 3.353A1.5 1.5 0 0110 10.707V13h2v-2.293L15.414 6.586a2 2 0 012.828 2.828l-3.353 3.353A1.5 1.5 0 0113 13.707V16h-2v-2.293L7.586 17.414a2 2 0 11-2.828-2.828l3.353-3.353A1.5 1.5 0 0110 9.293V7H8V9.293L4.586 5.88a2 2 0 112.828-2.828l3.353 3.353A1.5 1.5 0 0110 6.293V4h2v2.293L15.414 3.586a2 2 0 112.828 2.828L14.828 9.707A1.5 1.5 0 0113 10.293V13h2v-2.293L17.414 7.586a2 2 0 11-2.828-2.828l-3.353 3.353A1.5 1.5 0 0110 8.707V6H8V8.707L4.586 12.12a2 2 0 11-2.828-2.828l3.353-3.353A1.5 1.5 0 017 6.293V3h2v2.293L12.414 2.586a2 2 0 112.828 2.828z" />
+                </svg>
+                Base Converter
+            </button>
+             <button class="tab-button" onclick="showSection('icoConverterSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.39 9.53a1 1 0 01.31-1.28l4.49-3.07a1 1 0 011.21.14l4.23 4.23a1 1 0 01-.14 1.21l-3.07 4.49a1 1 0 01-1.28.31l-4.7-3.07a1 1 0 01-.31-1.28z" clip-rule="evenodd" />
+                </svg>
+                ICO Converter
+            </button>
+            <button class="tab-button" onclick="showSection('imageResizerSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm6 0v6a1 1 0 001 1h4V5H9zm1 1h3v4h-3V6z" clip-rule="evenodd" />
+                </svg>
+                Image Resizer
+            </button>
+            <button class="tab-button" onclick="showSection('unitConverterSection')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a1 1 0 00.91 1l-.09.02A1.5 1.5 0 006.5 15.5l.09.02A1 1 0 008 15h8a1 1 0 001-1V5a1 1 0 00-1-1H3zm6 1a1 1 0 00-1-1H5a1 1 0 00-1 1v6a1 1 0 001 1h3V4zm6 0a1 1 0 00-1-1h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1V4z" clip-rule="evenodd" />
+                </svg>
+                Unit Converter
+            </button>
+        </div>
+
+        <div class="converter-section active" id="imageConverterSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image Converter (to PNG)</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="imageFileInput" class="text-gray-700 font-medium text-lg">Upload Image File:</label>
+                    <input type="file" id="imageFileInput" accept=".png, .jpg, .jpeg, .gif, .webp" class="input-field block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer">
+                </div>
+                <p class="text-center text-gray-600 font-medium text-lg">- OR -</p>
+                <div class="input-group">
+                    <label for="imageUrlInput" class="text-gray-700 font-medium text-lg">Enter Image URL:</label>
+                    <input type="text" id="imageUrlInput" placeholder="e.g., https://example.com/image.jpg" class="input-field">
+                </div>
+                <button onclick="convertImage()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a3 3 0 013 3v10a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h.586a2 2 0 011.414.586l4 4a2 2 0 002.828 0l-4-4a2 2 0 00-2.828 0L7.586 8H7a2 2 0 00-2 2v6a2 2 0 002 2zm-4 4a2 2 0 012 2h10a2 2 0 012-2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Convert Image</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="converter-section" id="documentConverterSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Document Converter</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="documentFileInput" class="text-gray-700 font-medium text-lg">Upload Document File (PDF, DOC, DOCX):</label>
+                    <input type="file" id="documentFileInput" accept=".pdf, .doc, .docx" class="input-field block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer">
+                </div>
+                <button onclick="convertDocument()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Convert Document</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="converter-section" id="baseConverterSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Base Converter</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="baseInputValue" class="text-gray-700 font-medium text-lg">Number to Convert:</label>
+                    <input type="text" id="baseInputValue" placeholder="Enter number" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label for="sourceBaseSelect" class="text-gray-700 font-medium text-lg">Source Base:</label>
+                    <select id="sourceBaseSelect" class="input-field">
+                        <option value="binary">Binary (Base 2)</option>
+                        <option value="decimal" selected>Decimal (Base 10)</option>
+                        <option value="octal">Octal (Base 8)</option>
+                        <option value="hexadecimal">Hexadecimal (Base 16)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="targetBaseSelect" class="text-gray-700 font-medium text-lg">Target Base:</label>
+                    <select id="targetBaseSelect" class="input-field">
+                        <option value="binary">Binary (Base 2)</option>
+                        <option value="decimal">Decimal (Base 10)</option>
+                        <option value="octal">Octal (Base 8)</option>
+                        <option value="hexadecimal" selected>Hexadecimal (Base 16)</option>
+                    </select>
+                </div>
+                <button onclick="convertBase()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Convert Base</span>
+                </button>
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
+                    <p class="text-base font-semibold text-blue-800">Converted Result:</p>
+                    <p id="baseConversionResult" class="text-xl font-extrabold text-blue-900 break-words mt-1"></p>
+                    <p class="text-sm font-semibold text-blue-700 mt-4">Solution Steps:</p>
+                    <pre id="baseConversionSolution" class="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-blue-100 p-3 rounded-md mt-2"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="converter-section" id="icoConverterSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image to ICO Converter</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="icoFileInput" class="text-gray-700 font-medium text-lg">Upload Image File (PNG, JPG, JPEG, WEBP):</label>
+                    <input type="file" id="icoFileInput" accept=".png, .jpg, .jpeg, .webp" class="input-field block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer">
+                </div>
+                <button onclick="convertToIco()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354V18.646m0-14.292a.75.75 0 011.5 0v14.292a.75.75 0 01-1.5 0zM12 4.354L5 11.354M12 4.354l7 7M5 11.354l-1 1M19 11.354l1 1M18 19a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2h8a2 2 0 012 2v12z" />
+                    </svg>
+                    <span>Convert to ICO</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="converter-section" id="imageResizerSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image Resizer</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="resizeFileInput" class="text-gray-700 font-medium text-lg">Upload Image File (PNG, JPG, JPEG, GIF, WEBP):</label>
+                    <input type="file" id="resizeFileInput" accept=".png, .jpg, .jpeg, .gif, .webp" class="input-field block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer">
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="input-group flex-1">
+                        <label for="resizeWidthInput" class="text-gray-700 font-medium text-lg">Target Width (px):</label>
+                        <input type="number" id="resizeWidthInput" placeholder="e.g., 256" class="input-field" min="1">
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="resizeHeightInput" class="text-gray-700 font-medium text-lg">Target Height (px):</label>
+                        <input type="number" id="resizeHeightInput" placeholder="e.g., 256" class="input-field" min="1">
+                    </div>
+                </div>
+                <button onclick="resizeImage()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Resize Image</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="converter-section" id="unitConverterSection">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Unit Converter</h2>
+            <div class="space-y-4">
+                <div class="input-group">
+                    <label for="unitValueInput" class="text-gray-700 font-medium text-lg">Value:</label>
+                    <input type="number" id="unitValueInput" placeholder="Enter value" class="input-field">
+                </div>
+                <div class="input-group">
+                    <label for="unitTypeSelect" class="text-gray-700 font-medium text-lg">Unit Type:</label>
+                    <select id="unitTypeSelect" class="input-field" onchange="populateUnitOptions()">
+                        <option value="">Select Type</option>
+                        <option value="temperature">Temperature</option>
+                        <option value="length">Length</option>
+                        <option value="mass">Mass</option>
+                    </select>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="input-group flex-1">
+                        <label for="fromUnitSelect" class="text-gray-700 font-medium text-lg">From Unit:</label>
+                        <select id="fromUnitSelect" class="input-field">
+                            </select>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="toUnitSelect" class="text-gray-700 font-medium text-lg">To Unit:</label>
+                        <select id="toUnitSelect" class="input-field">
+                            </select>
+                    </div>
+                </div>
+                <button onclick="convertUnit()" class="btn w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span>Convert Unit</span>
+                </button>
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
+                    <p class="text-base font-semibold text-blue-800">Converted Result:</p>
+                    <p id="unitConversionResult" class="text-xl font-extrabold text-blue-900 break-words mt-1"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="static/script.js"></script>
+    <script>
+        // Initial setup to show the first section on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            showSection('imageConverterSection');
+            populateUnitOptions(); // Populate units for the first time
+        });
+
+        // Function to handle tab switching
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.converter-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show the selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Activate the corresponding tab button
+            const activeTabButton = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+            if (activeTabButton) {
+                activeTabButton.classList.add('active');
+            }
+        }
+
+        // Unit conversion options
+        const unitOptions = {
+            temperature: [
+                { value: 'celsius', text: 'Celsius (°C)' },
+                { value: 'fahrenheit', text: 'Fahrenheit (°F)' },
+                { value: 'kelvin', text: 'Kelvin (K)' }
+            ],
+            length: [
+                { value: 'meters', text: 'Meters (m)' },
+                { value: 'kilometers', text: 'Kilometers (km)' },
+                { value: 'miles', text: 'Miles (mi)' },
+                { value: 'feet', text: 'Feet (ft)' },
+                { value: 'inches', text: 'Inches (in)' }
+            ],
+            mass: [
+                { value: 'kilograms', text: 'Kilograms (kg)' },
+                { value: 'grams', text: 'Grams (g)' },
+                { value: 'pounds', text: 'Pounds (lb)' },
+                { value: 'ounces', text: 'Ounces (oz)' }
+            ]
+        };
+
+        // Function to populate "From Unit" and "To Unit" dropdowns based on Unit Type selection
+        function populateUnitOptions() {
+            const unitType = document.getElementById('unitTypeSelect').value;
+            const fromUnitSelect = document.getElementById('fromUnitSelect');
+            const toUnitSelect = document.getElementById('toUnitSelect');
+
+            fromUnitSelect.innerHTML = '';
+            toUnitSelect.innerHTML = '';
+
+            const options = unitOptions[unitType] || [];
+
+            if (options.length === 0) {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.text = "Select Unit Type First";
+                fromUnitSelect.add(defaultOption);
+                toUnitSelect.add(defaultOption.cloneNode(true));
+                return;
+            }
+
+            options.forEach(unit => {
+                const optionFrom = document.createElement('option');
+                optionFrom.value = unit.value;
+                optionFrom.text = unit.text;
+                fromUnitSelect.add(optionFrom);
+
+                const optionTo = document.createElement('option');
+                optionTo.value = unit.value;
+                optionTo.text = unit.text;
+                toUnitSelect.add(optionTo);
+            });
+
+            // Set default selections (e.g., first option)
+            if (options.length > 0) {
+                fromUnitSelect.value = options[0].value;
+                toUnitSelect.value = options[0].value;
+            }
+        }
+    </script>
+</body>
+</html>
