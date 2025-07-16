@@ -3,7 +3,6 @@ from PIL import Image
 import os
 import io
 from pdf2docx import Converter as PdfToDocxConverter
-from docx2pdf import convert as docx_to_pdf_convert
 import logging
 import zipfile
 import glob
@@ -133,6 +132,20 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
 
     return "\n".join(steps)
 
+def convert_docx_to_pdf(input_path, output_path):
+    try:
+        subprocess.run([
+            "libreoffice",
+            "--headless",
+            "--convert-to", "pdf",
+            "--outdir", os.path.dirname(output_path),
+            input_path
+        ], check=True)
+        generated_pdf = os.path.splitext(input_path)[0] + '.pdf'
+        os.rename(generated_pdf, output_path)
+    except Exception as e:
+        raise RuntimeError(f"LibreOffice conversion failed: {e}")
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -250,16 +263,12 @@ def convert_document_api():
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as output_temp_file:
                 output_filepath = output_temp_file.name
 
-            logger.info(f"Converting DOCX to PDF. Output: {output_filepath}")
-            if sys.platform == "win32" and 'pythoncom' in sys.modules:
-                try:
-                    import pythoncom
-                    pythoncom.CoInitialize()
-                    docx_to_pdf_convert(input_filepath, output_filepath)
-                finally:
-                    pythoncom.CoUninitialize()
-            else:
-                docx_to_pdf_convert(input_filepath, output_filepath)
+            logger.info(f"Converting DOCX to PDF using LibreOffice. Output: {output_filepath}")
+            try:
+                convert_docx_to_pdf(input_filepath, output_filepath)
+            except Exception as e:
+                logger.error(f"DOCX to PDF conversion failed: {e}")
+                return jsonify({'error': f'DOCX to PDF conversion failed: {e}'}), 500
             mimetype = 'application/pdf'
             logger.info("DOCX to PDF conversion complete.")
         elif filename.lower().endswith('.doc'):
