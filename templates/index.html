@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Universal Converter Hub</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .converter-card-uniform {
@@ -90,7 +87,6 @@
 </head>
 <body>
     
-    <!-- Toast Notifications -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 11000">
         <div id="liveToast" class="toast" role="alert">
             <div class="toast-header">
@@ -102,7 +98,6 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner-border text-light" style="width: 4rem; height: 4rem;"></div>
     </div>
@@ -111,7 +106,6 @@
     <div class="container-fluid py-4">
         <div class="main-container p-4 mx-auto">
             <div class="row g-4">
-                <!-- Sidebar -->
                 <div class="col-lg-3">
                     <div class="sidebar">
                         <h5 class="fw-bold mb-3 px-2">
@@ -143,10 +137,8 @@
                     </div>
                 </div>
 
-                <!-- Content Area -->
                 <div class="col-lg-9">
                     
-                    <!-- QR Code Generator -->
                     <div class="converter-section active" id="qrcodeSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-qr-code text-primary"></i> QR Code Generator
@@ -249,7 +241,6 @@
                         </div>
                     </div>
 
-                    <!-- Image Converter -->
                     <div class="converter-section converter-card-uniform" id="imageSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-image text-primary"></i> Image to PNG Converter
@@ -279,7 +270,6 @@
                         </button>
                     </div>
 
-                    <!-- Document Converter -->
                     <div class="converter-section converter-card-uniform" id="documentSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-file-earmark-pdf text-primary"></i> Document Converter
@@ -303,7 +293,6 @@
                         </div>
                     </div>
 
-                    <!-- ICO Converter -->
                     <div class="converter-section converter-card-uniform" id="icoSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-file-image text-primary"></i> ICO Converter
@@ -322,7 +311,6 @@
                         </button>
                     </div>
 
-                    <!-- Image Resizer -->
                     <div class="converter-section converter-card-uniform" id="resizerSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-arrows-fullscreen text-primary"></i> Image Resizer
@@ -359,7 +347,6 @@
                         </button>
                     </div>
 
-                    <!-- Base Converter -->
                     <div class="converter-section converter-card-uniform" id="baseSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-calculator text-primary"></i> Number Base Converter
@@ -424,7 +411,6 @@
                         </div>
                     </div>
 
-                    <!-- Unit Converter -->
                     <div class="converter-section converter-card-uniform" id="unitSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-speedometer2 text-primary"></i> Unit Converter
@@ -487,7 +473,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="static/script.js"></script>
     
