@@ -134,18 +134,78 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
     return "\n".join(steps)
 
 def convert_docx_to_pdf(input_path, output_path):
+    """Convert DOCX to PDF using multiple fallback methods"""
+    
+    # Method 1: Try using comtypes (Windows)
+    if sys.platform == "win32":
+        try:
+            import comtypes.client
+            import os
+            import pythoncom
+            pythoncom.CoInitialize()
+            try:
+                word = comtypes.client.CreateObject('Word.Application')
+                word.Visible = False
+                # Convert paths to absolute paths
+                abs_input = os.path.abspath(input_path)
+                abs_output = os.path.abspath(output_path)
+                doc = word.Documents.Open(abs_input)
+                doc.SaveAs(abs_output, FileFormat=17)  # 17 = wdFormatPDF
+                doc.Close()
+                word.Quit()
+                logger.info("DOCX to PDF conversion successful using comtypes/Word")
+                return
+            finally:
+                pythoncom.CoUninitialize()
+        except ImportError:
+            logger.warning("comtypes not installed, trying next method...")
+        except Exception as e:
+            logger.warning(f"comtypes/Word conversion failed: {e}, trying next method...")
+    
+    # Method 2: Try LibreOffice
     try:
-        subprocess.run([
-            "libreoffice",
-            "--headless",
-            "--convert-to", "pdf",
-            "--outdir", os.path.dirname(output_path),
-            input_path
-        ], check=True)
-        generated_pdf = os.path.splitext(input_path)[0] + '.pdf'
-        os.rename(generated_pdf, output_path)
+        # Try different LibreOffice executable names
+        libreoffice_commands = ['libreoffice', 'soffice', 'C:\\Program Files\\LibreOffice\\program\\soffice.exe']
+        
+        success = False
+        for cmd in libreoffice_commands:
+            try:
+                subprocess.run([
+                    cmd,
+                    "--headless",
+                    "--convert-to", "pdf",
+                    "--outdir", os.path.dirname(output_path),
+                    input_path
+                ], check=True, capture_output=True)
+                
+                # LibreOffice creates the PDF with the same name as input
+                generated_pdf = os.path.join(
+                    os.path.dirname(output_path),
+                    os.path.splitext(os.path.basename(input_path))[0] + '.pdf'
+                )
+                
+                if os.path.exists(generated_pdf):
+                    if generated_pdf != output_path:
+                        os.rename(generated_pdf, output_path)
+                    logger.info(f"DOCX to PDF conversion successful using {cmd}")
+                    success = True
+                    break
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                continue
+        
+        if success:
+            return
     except Exception as e:
-        raise RuntimeError(f"LibreOffice conversion failed: {e}")
+        logger.warning(f"LibreOffice conversion failed: {e}")
+    
+    # If all methods fail, raise an error with helpful message
+    error_msg = (
+        "DOCX to PDF conversion failed. Please install one of the following:\n"
+        "1. Microsoft Word (Windows)\n"
+        "2. LibreOffice (Download from https://www.libreoffice.org/)\n"
+        "Or install comtypes: pip install comtypes"
+    )
+    raise RuntimeError(error_msg)
 
 @app.route('/')
 def index():
@@ -177,9 +237,97 @@ def convert_image_api():
     converted_filename = "converted_image.png" # Output format is fixed to PNG here
 
     try:
+        img = None
         if file:
-            img = Image.open(file.stream)
-            logger.info("Image file opened successfully.")
+            # Read file content for analysis
+            file.stream.seek(0)
+            file_content = file.stream.read()
+            logger.info(f"Read {len(file_content)} bytes from uploaded file")
+            
+            # Detect file format by signature
+            detected_format = None
+            if len(file_content) >= 12:
+                if file_content[:2] == b'\xff\xd8':
+                    detected_format = 'JPEG'
+                elif file_content[:8] == b'\x89PNG\r\n\x1a\n':
+                    detected_format = 'PNG'
+                elif b'ftyp' in file_content[:12]:
+                    if b'avif' in file_content[:32] or b'avis' in file_content[:32]:
+                        detected_format = 'AVIF'
+                    elif b'heic' in file_content[:32] or b'heix' in file_content[:32] or b'mif1' in file_content[:32]:
+                        detected_format = 'HEIF'
+                    else:
+                        detected_format = 'HEIF'
+                    logger.info(f"Detected HEIF/AVIF format file")
+            
+            # Register HEIF support
+            try:
+                from pillow_heif import register_heif_opener
+                register_heif_opener()
+            except ImportError:
+                pass
+            
+            # Try multiple methods to open the image
+            try:
+                # Method 1: Direct BytesIO
+                img = Image.open(io.BytesIO(file_content))
+                logger.info(f"Image opened successfully (Method 1), format: {img.format}")
+            except Exception as e1:
+                logger.warning(f"Method 1 failed: {e1}")
+                
+                # Method 1b: If HEIF/AVIF, try pillow_heif directly
+                img = None
+                if detected_format in ['AVIF', 'HEIF']:
+                    try:
+                        import pillow_heif
+                        heif_file = pillow_heif.read_heif(io.BytesIO(file_content))
+                        img = Image.frombytes(
+                            heif_file.mode,
+                            heif_file.size,
+                            heif_file.data,
+                            "raw"
+                        )
+                        logger.info(f"Image opened successfully (Method 1b: pillow_heif direct), size: {img.size}")
+                    except Exception as e1b:
+                        logger.warning(f"Method 1b (pillow_heif direct) failed: {e1b}")
+                
+                # Method 2: OpenCV
+                if not img:
+                    try:
+                        import cv2
+                        import numpy as np
+                        nparr = np.frombuffer(file_content, np.uint8)
+                        img_cv = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+                        if img_cv is not None:
+                            if len(img_cv.shape) == 3 and img_cv.shape[2] == 3:
+                                img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+                            elif len(img_cv.shape) == 3 and img_cv.shape[2] == 4:
+                                img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGRA2RGBA)
+                            img = Image.fromarray(img_cv)
+                            logger.info("Image opened successfully (Method 2: OpenCV)")
+                        else:
+                            raise Exception("OpenCV decode failed")
+                    except Exception as e2:
+                        logger.warning(f"Method 2 failed: {e2}")
+                        
+                        # Method 3: Temp file with correct extension
+                        if detected_format in ['AVIF', 'HEIF']:
+                            file_ext = '.avif' if detected_format == 'AVIF' else '.heic'
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                                temp_file.write(file_content)
+                                temp_path = temp_file.name
+                            try:
+                                img = Image.open(temp_path)
+                                logger.info(f"Image opened successfully (Method 3: temp file with {file_ext})")
+                            finally:
+                                if os.path.exists(temp_path):
+                                    os.remove(temp_path)
+                        else:
+                            raise Exception("All methods failed")
+            
+            if not img:
+                raise Image.UnidentifiedImageError("Could not open image with any method")
+                
         elif image_url:
             logger.info(f"Attempting to fetch image from URL: {image_url}")
             response = requests.get(image_url, stream=True)
@@ -568,39 +716,255 @@ def resize_image_api():
 @app.route('/api/generate-qrcode', methods=['POST'])
 def generate_qrcode_api():
     logger.info("Received request for QR code generation.")
-    data = request.json
-    if not data:
-        return jsonify({'error': 'No JSON data provided.'}), 400
-    
-    url = data.get('url')
+    # Accept both JSON and form-data (for file upload)
+    if request.content_type and request.content_type.startswith('multipart/form-data'):
+        url = request.form.get('url')
+        logo_file = request.files.get('logo')
+        fg_color = request.form.get('fgColor', '#000000')
+        bg_color = request.form.get('bgColor', '#ffffff')
+        style = request.form.get('style', 'square')
+        logo_size_percent = int(request.form.get('logoSize', '30'))
+        error_correction_level = request.form.get('errorCorrection', 'H')
+    else:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided.'}), 400
+        url = data.get('url')
+        logo_file = None
+        fg_color = data.get('fgColor', '#000000')
+        bg_color = data.get('bgColor', '#ffffff')
+        style = data.get('style', 'square')
+        logo_size_percent = int(data.get('logoSize', '30'))
+        error_correction_level = data.get('errorCorrection', 'H')
+
     if not url or url.strip() == '':
         return jsonify({'error': 'No URL provided for QR code generation.'}), 400
-    
     url = url.strip()
-    
+
     try:
+        # Map error correction level
+        error_correction_map = {
+            'L': qrcode.constants.ERROR_CORRECT_L,
+            'M': qrcode.constants.ERROR_CORRECT_M,
+            'Q': qrcode.constants.ERROR_CORRECT_Q,
+            'H': qrcode.constants.ERROR_CORRECT_H
+        }
+        error_correction = error_correction_map.get(error_correction_level, qrcode.constants.ERROR_CORRECT_H)
+        
         # Create QR code instance
         qr = qrcode.QRCode(
-            version=1,  # Controls the size of the QR code (1 is smallest)
-            error_correction=qrcode.constants.ERROR_CORRECT_L,  # Error correction level
-            box_size=10,  # Size of each box in pixels
-            border=4,  # Border size in boxes
+            version=1,
+            error_correction=error_correction,
+            box_size=10,
+            border=4,
         )
-        
-        # Add data to the QR code
         qr.add_data(url)
         qr.make(fit=True)
-        
-        # Create an image from the QR code
-        qr_img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Save to buffer
+
+        # Use qrcode.image.styledpil.StyledPilImage for styled modules if requested
+        qr_img = None
+        if style == 'rounded':
+            try:
+                from qrcode.image.styledpil import StyledPilImage
+                from qrcode.image.styles.moduledrawers import RoundedModuleDrawer
+                qr_img = qr.make_image(image_factory=StyledPilImage, module_drawer=RoundedModuleDrawer(), fill_color=fg_color, back_color=bg_color).convert('RGBA')
+            except Exception as e:
+                logger.warning(f"Failed to use rounded style: {e}")
+                qr_img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert('RGBA')
+        elif style == 'dots':
+            try:
+                from qrcode.image.styledpil import StyledPilImage
+                from qrcode.image.styles.moduledrawers import CircleModuleDrawer
+                qr_img = qr.make_image(image_factory=StyledPilImage, module_drawer=CircleModuleDrawer(), fill_color=fg_color, back_color=bg_color).convert('RGBA')
+            except Exception as e:
+                logger.warning(f"Failed to use dots style: {e}")
+                qr_img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert('RGBA')
+        else:
+            qr_img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert('RGBA')
+
+        # If logo is provided, embed it in the center
+        qr_width, qr_height = qr_img.size
+        logo_size = int(min(qr_width, qr_height) * (logo_size_percent / 100.0))
+        from PIL import ImageDraw
+        logger.info(f"Logo file check: logo_file = {logo_file}, type = {type(logo_file)}")
+        if logo_file and logo_file.filename:
+            logo_img = None
+            try:
+                logger.info(f"Logo file received: {logo_file.filename}, content_type: {logo_file.content_type}")
+                
+                # Read file content
+                logo_file.stream.seek(0)
+                file_content = logo_file.stream.read()
+                logger.info(f"Read {len(file_content)} bytes from upload")
+                
+                # Diagnostic: Check file signature (magic bytes)
+                if len(file_content) >= 8:
+                    magic_bytes = file_content[:8]
+                    logger.info(f"File signature (first 8 bytes): {magic_bytes.hex()}")
+                    
+                    # Detect actual file format from signature
+                    detected_format = None
+                    if file_content[:2] == b'\xff\xd8':
+                        detected_format = 'JPEG'
+                        logger.info("Detected JPEG signature")
+                    elif file_content[:8] == b'\x89PNG\r\n\x1a\n':
+                        detected_format = 'PNG'
+                        logger.info("Detected PNG signature")
+                    elif file_content[:4] in [b'RIFF', b'WEBP']:
+                        detected_format = 'WEBP'
+                        logger.info("Detected WebP signature")
+                    elif file_content[:4] == b'GIF8':
+                        detected_format = 'GIF'
+                        logger.info("Detected GIF signature")
+                    elif b'ftyp' in file_content[:12]:
+                        # HEIF/AVIF container format
+                        if b'avif' in file_content[:32] or b'avis' in file_content[:32]:
+                            detected_format = 'AVIF'
+                            logger.info("Detected AVIF signature")
+                        elif b'heic' in file_content[:32] or b'heix' in file_content[:32] or b'mif1' in file_content[:32]:
+                            detected_format = 'HEIF'
+                            logger.info("Detected HEIF/HEIC signature")
+                        else:
+                            detected_format = 'HEIF'
+                            logger.info("Detected HEIF-based container (could be AVIF or HEIC)")
+                    else:
+                        logger.warning(f"Unknown or invalid image signature - file may be corrupted or not an image")
+                
+                # Try to register HEIF/AVIF support if available
+                try:
+                    from pillow_heif import register_heif_opener
+                    register_heif_opener()
+                    logger.info("HEIF/AVIF support registered")
+                except ImportError:
+                    logger.warning("pillow-heif not available, HEIF/AVIF formats won't be supported")
+                
+                # Method 1: Try reading directly from BytesIO
+                try:
+                    logo_img = Image.open(io.BytesIO(file_content))
+                    # For JPEG files, verify and load the data
+                    if hasattr(logo_img, 'format') and logo_img.format == 'JPEG':
+                        logo_img.load()  # Force load to verify
+                    logger.info(f"Method 1 SUCCESS - Logo format: {logo_img.format}, mode: {logo_img.mode}, size: {logo_img.size}")
+                except Exception as e1:
+                    logger.warning(f"Method 1 (BytesIO) failed: {e1}")
+                    
+                    # Method 1b: If it's HEIF/AVIF, try pillow_heif directly
+                    if detected_format in ['AVIF', 'HEIF']:
+                        try:
+                            import pillow_heif
+                            heif_file = pillow_heif.read_heif(io.BytesIO(file_content))
+                            logo_img = Image.frombytes(
+                                heif_file.mode,
+                                heif_file.size,
+                                heif_file.data,
+                                "raw"
+                            )
+                            logger.info(f"Method 1b SUCCESS - pillow_heif direct read, size: {logo_img.size}")
+                        except Exception as e1b:
+                            logger.warning(f"Method 1b (pillow_heif direct) failed: {e1b}")
+                            logo_img = None
+                    
+                    # Method 2: Try using opencv to read and convert
+                    if not logo_img:
+                        try:
+                            import cv2
+                            import numpy as np
+                        
+                            # Decode image with opencv
+                            nparr = np.frombuffer(file_content, np.uint8)
+                            img_cv = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+                            
+                            if img_cv is not None:
+                                # Convert BGR to RGB (opencv uses BGR)
+                                if len(img_cv.shape) == 3 and img_cv.shape[2] == 3:
+                                    img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+                                elif len(img_cv.shape) == 3 and img_cv.shape[2] == 4:
+                                    img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGRA2RGBA)
+                                
+                                # Convert to PIL Image
+                                logo_img = Image.fromarray(img_cv)
+                                logger.info(f"Method 2 SUCCESS - OpenCV conversion succeeded, size: {logo_img.size}")
+                            else:
+                                raise Exception("OpenCV could not decode image")
+                        except Exception as e2:
+                            logger.warning(f"Method 2 (OpenCV) failed: {e2}")
+                        
+                        # Method 3: Try saving to temp file with correct extension based on signature
+                        try:
+                            # Use detected format to determine correct extension
+                            if detected_format == 'AVIF':
+                                file_ext = '.avif'
+                            elif detected_format == 'HEIF':
+                                file_ext = '.heic'
+                            elif detected_format:
+                                file_ext = f'.{detected_format.lower()}'
+                            else:
+                                # Fallback to original extension
+                                file_ext = os.path.splitext(logo_file.filename)[1] or '.jpg'
+                            
+                            logger.info(f"Trying temp file method with extension: {file_ext}")
+                            
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                                temp_file.write(file_content)
+                                temp_path = temp_file.name
+                            
+                            try:
+                                # Try to open with PIL
+                                logo_img = Image.open(temp_path)
+                                logo_img.load()  # Force load
+                                logger.info(f"Method 3 SUCCESS - Temp file method succeeded, format: {logo_img.format}")
+                            except Exception as e3_inner:
+                                logger.warning(f"Method 3a (temp file PIL) failed: {e3_inner}")
+                                
+                                # Try with opencv as last resort
+                                img_cv = cv2.imread(temp_path, cv2.IMREAD_UNCHANGED)
+                                if img_cv is not None:
+                                    if len(img_cv.shape) == 3 and img_cv.shape[2] == 3:
+                                        img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+                                    elif len(img_cv.shape) == 3 and img_cv.shape[2] == 4:
+                                        img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGRA2RGBA)
+                                    logo_img = Image.fromarray(img_cv)
+                                    logger.info(f"Method 3b SUCCESS - OpenCV from temp file succeeded")
+                                else:
+                                    raise Exception("OpenCV could not read temp file")
+                            finally:
+                                # Clean up temp file
+                                if os.path.exists(temp_path):
+                                    os.remove(temp_path)
+                        except Exception as e3:
+                            logger.warning(f"Method 3 (temp file) failed: {e3}")
+                            
+                            # All methods failed - log detailed error and skip logo
+                            logger.error(f"All image decoding methods failed for {logo_file.filename}. The file may be corrupted or in an unsupported format. QR code will be generated without logo.")
+                            logo_img = None
+                
+                # If we successfully loaded the image, embed it in the QR code
+                if logo_img:
+                    logo_img = logo_img.convert('RGBA')
+                    logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
+                    pos = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+                    qr_img.paste(logo_img, pos, mask=logo_img)
+                    logger.info(f"Logo pasted successfully at position {pos} with size {logo_size}x{logo_size}")
+                else:
+                    logger.warning("Logo could not be loaded - QR code generated without logo")
+                
+            except Exception as e:
+                import traceback
+                logger.error(f"Failed to embed logo: {e}\n{traceback.format_exc()}")
+                # Only fallback to red circle if logo processing fails
+                overlay = Image.new('RGBA', (logo_size, logo_size), (255, 0, 0, 0))
+                draw = ImageDraw.Draw(overlay)
+                draw.ellipse((0, 0, logo_size, logo_size), fill=(255, 0, 0, 180))
+                pos = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+                qr_img.paste(overlay, pos, mask=overlay)
+        else:
+            logger.info("No logo file provided or filename is empty")
+        # If no logo_file, do not overlay anything (no red spot)
+
         output_buffer = io.BytesIO()
         qr_img.save(output_buffer, format='PNG')
         output_buffer.seek(0)
-        
         logger.info(f"QR code generated successfully for URL: {url}")
-        
         response = send_file(
             output_buffer,
             mimetype='image/png',
@@ -608,7 +972,6 @@ def generate_qrcode_api():
             download_name='qrcode.png'
         )
         return response
-        
     except Exception as e:
         logger.exception("An error occurred during QR code generation.")
         return jsonify({'error': f'An error occurred during QR code generation: {e}'}), 500

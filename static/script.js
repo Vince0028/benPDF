@@ -63,51 +63,43 @@ async function convertImage() {
 // Function to handle Document Conversion
 async function convertDocument() {
     const documentFileInput = document.getElementById('documentFileInput');
-    if (documentFileInput.files.length === 0) {
-        showMessageBox('Please upload a document file.');
+    const file = documentFileInput.files[0];
+
+    if (!file) {
+        showMessageBox('Please select a document file to convert.');
         return;
     }
 
-    const file = documentFileInput.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
-
     showLoading();
     try {
+        const formData = new FormData();
+        formData.append('file', file);
+
         const response = await fetch('/api/convert-document', {
             method: 'POST',
-            body: formData,
+            body: formData
         });
 
         if (response.ok) {
             const blob = await response.blob();
-            const disposition = response.headers.get('Content-Disposition');
-            let filename = 'converted_document';
-
-            if (disposition && disposition.indexOf('attachment') !== -1) {
-                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                const matches = filenameRegex.exec(disposition);
-                if (matches != null && matches[1]) {
-                    filename = matches[1].replace(/['"]/g, '');
-                }
-            }
-
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename;
+            const originalFilename = file.name;
+            const extension = originalFilename.toLowerCase().endsWith('.pdf') ? 'docx' : 'pdf';
+            a.download = originalFilename.replace(/\.[^/.]+$/, `.${extension}`);
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-            showMessageBox('Document conversion successful! Download started.');
+            showMessageBox(`Document converted successfully to ${extension.toUpperCase()}!`);
         } else {
             const errorData = await response.json();
-            showMessageBox(`Error: ${errorData.error || response.statusText}`);
+            showMessageBox(`Error: ${errorData.error || 'Document conversion failed.'}`);
         }
     } catch (error) {
-        console.error('Error:', error);
-        showMessageBox('An unexpected error occurred during document conversion.');
+        console.error('Error during document conversion:', error);
+        showMessageBox('An error occurred while converting the document. Please try again.');
     } finally {
         hideLoading();
     }
@@ -291,10 +283,23 @@ async function resizeImage() {
 // Function to handle QR Code Generation
 async function generateQRCode() {
     const qrcodeUrlInput = document.getElementById('qrcodeUrlInput');
+    const qrcodeLogoInput = document.getElementById('qrcodeLogoInput');
     const qrcodePreview = document.getElementById('qrcodePreview');
     const qrcodeImage = document.getElementById('qrcodeImage');
     
     const url = qrcodeUrlInput.value.trim();
+    const logoFile = qrcodeLogoInput ? qrcodeLogoInput.files[0] : null;
+    
+    // Get customization options
+    const fgColor = document.getElementById('qrFgColor').value;
+    const bgColor = document.getElementById('qrBgColor').value;
+    const style = document.querySelector('input[name="qrStyle"]:checked').value;
+    const logoSize = document.getElementById('qrLogoSize').value;
+    const errorCorrection = document.getElementById('qrErrorCorrection').value;
+    
+    // Update color text inputs
+    document.getElementById('qrFgColorText').value = fgColor;
+    document.getElementById('qrBgColorText').value = bgColor;
     
     if (!url) {
         showMessageBox('Please enter a URL or text to generate a QR code.');
@@ -303,14 +308,20 @@ async function generateQRCode() {
 
     showLoading();
     try {
-        const response = await fetch('/api/generate-qrcode', {
+        const formData = new FormData();
+        formData.append('url', url);
+        formData.append('fgColor', fgColor);
+        formData.append('bgColor', bgColor);
+        formData.append('style', style);
+        formData.append('logoSize', logoSize);
+        formData.append('errorCorrection', errorCorrection);
+        if (logoFile) {
+            formData.append('logo', logoFile);
+        }
+
+    const response = await fetch('/api/generate-qrcode', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                url: url
-            }),
+            body: formData
         });
 
         if (response.ok) {
@@ -525,22 +536,43 @@ function showSection(sectionId) {
         section.classList.remove('active');
     });
 
-    // Deactivate all tab buttons
-    document.querySelectorAll('.tab-button').forEach(button => {
+    // Deactivate all list-group-item buttons (Bootstrap sidebar)
+    document.querySelectorAll('.list-group-item').forEach(button => {
         button.classList.remove('active');
     });
 
     // Show the selected section
-    document.getElementById(sectionId).classList.add('active');
-
-    // Activate the corresponding tab button
-    const activeTabButton = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
-    if (activeTabButton) {
-        activeTabButton.classList.add('active');
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
     }
 
-    // After switching, ensure the height stays consistent (in case content changed)
-    setUniformSectionHeight();
+    // Activate the corresponding sidebar button
+    const activeButton = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
+// Show Toast Notification
+function showMessageBox(message) {
+    const toastEl = document.getElementById('liveToast');
+    const toastBody = document.getElementById('toastMessage');
+    toastBody.textContent = message;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+
+function hideMessageBox() {
+    // Not needed with Bootstrap toasts
+}
+
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.add('show');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('show');
 }
 
 function renderBaseSolutionHTML(solutionText) {

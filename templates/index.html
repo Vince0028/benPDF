@@ -3,274 +3,508 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-functional Converter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="static/style.css">
+    <title>Universal Converter Hub</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .converter-card-uniform {
+            min-height: 650px;
+            max-width: 700px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1100px;
+            width: 100%;
+        }
+        .sidebar .list-group-item {
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        .sidebar .list-group-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        .sidebar .list-group-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .converter-section {
+            display: none;
+        }
+        .converter-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-preview {
+            width: 50px;
+            height: 38px;
+            border-radius: 5px;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center min-h-screen p-6 font-sans antialiased text-gray-800">
-
-    <div class="message-box" id="messageBox">
-        <p id="messageText"></p>
-        <button onclick="hideMessageBox()">OK</button>
+<body>
+    
+    <!-- Toast Notifications -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11000">
+        <div id="liveToast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
     </div>
 
+    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+        <div class="spinner-border text-light" style="width: 4rem; height: 4rem;"></div>
     </div>
 
-    <div class="container bg-white p-8 md:p-10 rounded-2xl shadow-xl max-w-4xl w-full space-y-8 border border-gray-200">
-        <h1 class="text-4xl font-extrabold text-gray-900 mb-6 text-center tracking-tight">Universal Converter Hub</h1>
-
-        <div class="tabs flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-8">
-            <button class="tab-button active" onclick="showSection('imageConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-4 4 4 4-4V5h-4l-3 3-4-4H4v10zm-2 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                </svg>
-                Image Converter
-            </button>
-            <button class="tab-button" onclick="showSection('documentConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0113 3.414L16.586 7A2 2 0 0118 8.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1-3a1 1 0 011-1h6a1 1 0 110 2H8a1 1 0 01-1-1zm1-3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" />
-                </svg>
-                Document Converter
-            </button>
-            <button class="tab-button" onclick="showSection('baseConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M12.586 4.586a2 2 0 112.828 2.828l-3.353 3.353A1.5 1.5 0 0110 10.707V13h2v-2.293L15.414 6.586a2 2 0 012.828 2.828l-3.353 3.353A1.5 1.5 0 0113 13.707V16h-2v-2.293L7.586 17.414a2 2 0 11-2.828-2.828l3.353-3.353A1.5 1.5 0 0110 9.293V7H8V9.293L4.586 5.88a2 2 0 112.828-2.828l3.353 3.353A1.5 1.5 0 0110 6.293V4h2v2.293L15.414 3.586a2 2 0 112.828 2.828L14.828 9.707A1.5 1.5 0 0113 10.293V13h2v-2.293L17.414 7.586a2 2 0 11-2.828-2.828l-3.353 3.353A1.5 1.5 0 0110 8.707V6H8V8.707L4.586 12.12a2 2 0 11-2.828-2.828l3.353-3.353A1.5 1.5 0 017 6.293V3h2v2.293L12.414 2.586a2 2 0 112.828 2.828z" />
-                </svg>
-                Base Converter
-            </button>
-             <button class="tab-button" onclick="showSection('icoConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.39 9.53a1 1 0 01.31-1.28l4.49-3.07a1 1 0 011.21.14l4.23 4.23a1 1 0 01-.14 1.21l-3.07 4.49a1 1 0 01-1.28.31l-4.7-3.07a1 1 0 01-.31-1.28z" clip-rule="evenodd" />
-                </svg>
-                ICO Converter
-            </button>
-            <button class="tab-button" onclick="showSection('imageResizerSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm6 0v6a1 1 0 001 1h4V5H9zm1 1h3v4h-3V6z" clip-rule="evenodd" />
-                </svg>
-                Image Resizer
-            </button>
-            <button class="tab-button" onclick="showSection('unitConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a1 1 0 00.91 1l-.09.02A1.5 1.5 0 006.5 15.5l.09.02A1 1 0 008 15h8a1 1 0 001-1V5a1 1 0 00-1-1H3zm6 1a1 1 0 00-1-1H5a1 1 0 00-1 1v6a1 1 0 001 1h3V4zm6 0a1 1 0 00-1-1h-2a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1V4z" clip-rule="evenodd" />
-                </svg>
-                Unit Converter
-            </button>
-            <button class="tab-button" onclick="showSection('qrcodeConverterSection')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clip-rule="evenodd" />
-                </svg>
-                QR Code Generator
-            </button>
-        </div>
-
-        <div class="converter-section active" id="imageConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image Converter (to PNG)</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="imageFileInput" class="text-gray-700 font-medium text-lg">Upload Image File:</label>
-                    <input type="file" id="imageFileInput" accept=".png, .jpg, .jpeg, .gif, .webp" class="input-field block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 cursor-pointer">
-                </div>
-                <p class="text-center text-gray-600 font-medium text-lg">- OR -</p>
-                <div class="input-group">
-                    <label for="imageUrlInput" class="text-gray-700 font-medium text-lg">Enter Image URL:</label>
-                    <input type="text" id="imageUrlInput" placeholder="e.g., https://example.com/image.jpg" class="input-field">
-                </div>
-                <button onclick="convertImage()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a3 3 0 013 3v10a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2h.586a2 2 0 011.414.586l4 4a2 2 0 002.828 0l-4-4a2 2 0 00-2.828 0L7.586 8H7a2 2 0 00-2 2v6a2 2 0 002 2zm-4 4a2 2 0 012 2h10a2 2 0 012-2H5a2 2 0 01-2-2z" />
-                    </svg>
-                    <span>Convert Image</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="converter-section" id="documentConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Document Converter</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="documentFileInput" class="text-gray-700 font-medium text-lg">Upload Document File (PDF, DOC, DOCX):</label>
-                    <input type="file" id="documentFileInput" accept=".pdf, .doc, .docx" class="input-field block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 cursor-pointer">
-                </div>
-                <button onclick="convertDocument()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Convert Document</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="converter-section" id="baseConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Base Converter</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="baseInputValue" class="text-gray-700 font-medium text-lg">Number to Convert:</label>
-                    <input type="text" id="baseInputValue" placeholder="Enter number" class="input-field">
-                </div>
-                <div class="input-group">
-                    <label for="sourceBaseSelect" class="text-gray-700 font-medium text-lg">Source Base:</label>
-                    <select id="sourceBaseSelect" class="input-field">
-                        <option value="binary">Binary (Base 2)</option>
-                        <option value="decimal" selected>Decimal (Base 10)</option>
-                        <option value="octal">Octal (Base 8)</option>
-                        <option value="hexadecimal">Hexadecimal (Base 16)</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="targetBaseSelect" class="text-gray-700 font-medium text-lg">Target Base:</label>
-                    <select id="targetBaseSelect" class="input-field">
-                        <option value="binary">Binary (Base 2)</option>
-                        <option value="decimal">Decimal (Base 10)</option>
-                        <option value="octal">Octal (Base 8)</option>
-                        <option value="hexadecimal" selected>Hexadecimal (Base 16)</option>
-                    </select>
-                </div>
-                <button onclick="convertBase()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span>Convert Base</span>
-                </button>
-                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
-                    <p class="text-base font-semibold text-blue-800">Converted Result:</p>
-                    <p id="baseConversionResult" class="text-xl font-extrabold text-blue-900 break-words mt-1"></p>
-                    <p class="text-sm font-semibold text-blue-700 mt-4">Solution Steps:</p>
-                    <pre id="baseConversionSolution" class="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-blue-100 p-3 rounded-md mt-2"></pre>
-                </div>
-            </div>
-        </div>
-
-        <div class="converter-section" id="icoConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image to ICO Converter</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="icoFileInput" class="text-gray-700 font-medium text-lg">Upload Image File (PNG, JPG, JPEG, WEBP):</label>
-                    <input type="file" id="icoFileInput" accept=".png, .jpg, .jpeg, .webp" class="input-field block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 cursor-pointer">
-                </div>
-                <button onclick="convertToIco()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354V18.646m0-14.292a.75.75 0 011.5 0v14.292a.75.75 0 01-1.5 0zM12 4.354L5 11.354M12 4.354l7 7M5 11.354l-1 1M19 11.354l1 1M18 19a2 2 0 01-2 2H8a2 2 0 01-2-2V7a2 2 0 012-2h8a2 2 0 012 2v12z" />
-                    </svg>
-                    <span>Convert to ICO</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="converter-section" id="imageResizerSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Image Resizer</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="resizeFileInput" class="text-gray-700 font-medium text-lg">Upload Image File (PNG, JPG, JPEG, GIF, WEBP):</label>
-                    <input type="file" id="resizeFileInput" accept=".png, .jpg, .jpeg, .gif, .webp" class="input-field block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 cursor-pointer">
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="input-group flex-1">
-                        <label for="resizeWidthInput" class="text-gray-700 font-medium text-lg">Target Width (px):</label>
-                        <input type="number" id="resizeWidthInput" placeholder="e.g., 256" class="input-field" min="1">
-                    </div>
-                    <div class="input-group flex-1">
-                        <label for="resizeHeightInput" class="text-gray-700 font-medium text-lg">Target Height (px):</label>
-                        <input type="number" id="resizeHeightInput" placeholder="e.g., 256" class="input-field" min="1">
+    <!-- Main Container -->
+    <div class="container-fluid py-4">
+        <div class="main-container p-4 mx-auto">
+            <div class="row g-4">
+                <!-- Sidebar -->
+                <div class="col-lg-3">
+                    <div class="sidebar">
+                        <h5 class="fw-bold mb-3 px-2">
+                            <i class="bi bi-lightning-charge-fill text-primary"></i> Converter Tools
+                        </h5>
+                        <div class="list-group">
+                            <button class="list-group-item list-group-item-action active" onclick="showSection('qrcodeSection')">
+                                <i class="bi bi-qr-code me-2"></i> QR Code Generator
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('imageSection')">
+                                <i class="bi bi-image me-2"></i> Image to PNG
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('documentSection')">
+                                <i class="bi bi-file-earmark-pdf me-2"></i> Document Converter
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('icoSection')">
+                                <i class="bi bi-file-image me-2"></i> ICO Converter
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('resizerSection')">
+                                <i class="bi bi-arrows-fullscreen me-2"></i> Image Resizer
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('baseSection')">
+                                <i class="bi bi-calculator me-2"></i> Base Converter
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('unitSection')">
+                                <i class="bi bi-speedometer2 me-2"></i> Unit Converter
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <button onclick="resizeImage()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span>Resize Image</span>
-                </button>
+
+                <!-- Content Area -->
+                <div class="col-lg-9">
+                    
+                    <!-- QR Code Generator -->
+                    <div class="converter-section active" id="qrcodeSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-qr-code text-primary"></i> QR Code Generator
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Enter URL or Text</label>
+                                <input type="text" id="qrcodeUrlInput" class="form-control form-control-lg" placeholder="https://example.com">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Foreground Color</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="qrFgColor" value="#000000" class="color-preview">
+                                            <input type="text" id="qrFgColorText" value="#000000" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Background Color</label>
+                                        <div class="color-input-group">
+                                            <input type="color" id="qrBgColor" value="#ffffff" class="color-preview">
+                                            <input type="text" id="qrBgColorText" value="#ffffff" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">QR Code Style</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="qrStyle" id="styleSquare" value="square" checked>
+                                    <label class="btn btn-outline-primary" for="styleSquare">
+                                        <i class="bi bi-square"></i> Square
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="qrStyle" id="styleRounded" value="rounded">
+                                    <label class="btn btn-outline-primary" for="styleRounded">
+                                        <i class="bi bi-circle"></i> Rounded
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="qrStyle" id="styleDots" value="dots">
+                                    <label class="btn btn-outline-primary" for="styleDots">
+                                        <i class="bi bi-dot"></i> Dots
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Logo (PNG recommended)</label>
+                                <input type="file" id="qrcodeLogoInput" accept=".png,.jpg,.jpeg" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Logo Size: <span id="logoSizeValue">30%</span></label>
+                                        <input type="range" id="qrLogoSize" min="10" max="40" value="30" class="form-range" oninput="document.getElementById('logoSizeValue').textContent = this.value + '%'">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Error Correction</label>
+                                        <select id="qrErrorCorrection" class="form-select">
+                                            <option value="L">Low (7%)</option>
+                                            <option value="M">Medium (15%)</option>
+                                            <option value="Q">Quartile (25%)</option>
+                                            <option value="H" selected>High (30%) - Best for logos</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="generateQRCode()" class="btn btn-primary btn-lg w-100 mb-4">
+                            <i class="bi bi-qr-code-scan me-2"></i> Generate QR Code
+                        </button>
+
+                        <div id="qrcodePreview" class="card border-0 shadow-sm" style="display:block;">
+                            <div class="card-body text-center">
+                                <h5 class="fw-semibold mb-3">Your QR Code</h5>
+                                <img id="qrcodeImage" src="" alt="QR Code" class="img-fluid" style="max-width: 400px; min-height: 120px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Converter -->
+                    <div class="converter-section converter-card-uniform" id="imageSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-image text-primary"></i> Image to PNG Converter
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Image File</label>
+                                <input type="file" id="imageFileInput" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control">
+                                <small class="text-muted">Supported formats: PNG, JPG, JPEG, GIF, WEBP</small>
+                            </div>
+                        </div>
+
+                        <div class="text-center my-3">
+                            <span class="badge bg-secondary px-3 py-2">OR</span>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Enter Image URL</label>
+                                <input type="text" id="imageUrlInput" class="form-control" placeholder="https://example.com/image.jpg">
+                            </div>
+                        </div>
+
+                        <button onclick="convertImage()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-arrow-repeat me-2"></i> Convert to PNG
+                        </button>
+                    </div>
+
+                    <!-- Document Converter -->
+                    <div class="converter-section converter-card-uniform" id="documentSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-file-earmark-pdf text-primary"></i> Document Converter
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Document</label>
+                                <input type="file" id="documentFileInput" accept=".pdf,.doc,.docx" class="form-control">
+                                <small class="text-muted">PDF ↔ DOCX conversion supported</small>
+                            </div>
+                        </div>
+
+                        <button onclick="convertDocument()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-arrow-left-right me-2"></i> Convert Document
+                        </button>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Tip:</strong> Upload a PDF to convert to DOCX, or upload a DOCX to convert to PDF
+                        </div>
+                    </div>
+
+                    <!-- ICO Converter -->
+                    <div class="converter-section converter-card-uniform" id="icoSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-file-image text-primary"></i> ICO Converter
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Image File</label>
+                                <input type="file" id="icoFileInput" accept=".png,.jpg,.jpeg,.webp" class="form-control">
+                                <small class="text-muted">Will be converted to ICO format (favicon)</small>
+                            </div>
+                        </div>
+
+                        <button onclick="convertToIco()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i> Convert to ICO
+                        </button>
+                    </div>
+
+                    <!-- Image Resizer -->
+                    <div class="converter-section converter-card-uniform" id="resizerSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-arrows-fullscreen text-primary"></i> Image Resizer
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Image File</label>
+                                <input type="file" id="resizeFileInput" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Width (pixels)</label>
+                                        <input type="number" id="resizeWidthInput" class="form-control" placeholder="256" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Height (pixels)</label>
+                                        <input type="number" id="resizeHeightInput" class="form-control" placeholder="256" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="resizeImage()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-aspect-ratio me-2"></i> Resize Image
+                        </button>
+                    </div>
+
+                    <!-- Base Converter -->
+                    <div class="converter-section converter-card-uniform" id="baseSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-calculator text-primary"></i> Number Base Converter
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Number to Convert</label>
+                                <input type="text" id="baseInputValue" class="form-control" placeholder="Enter number">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">From Base</label>
+                                        <select id="sourceBaseSelect" class="form-select">
+                                            <option value="binary">Binary (Base 2)</option>
+                                            <option value="decimal" selected>Decimal (Base 10)</option>
+                                            <option value="octal">Octal (Base 8)</option>
+                                            <option value="hexadecimal">Hexadecimal (Base 16)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">To Base</label>
+                                        <select id="targetBaseSelect" class="form-select">
+                                            <option value="binary">Binary (Base 2)</option>
+                                            <option value="decimal">Decimal (Base 10)</option>
+                                            <option value="octal">Octal (Base 8)</option>
+                                            <option value="hexadecimal" selected>Hexadecimal (Base 16)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="convertBase()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-arrow-repeat me-2"></i> Convert Base
+                        </button>
+
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Result</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="fs-4 fw-bold text-primary mb-0" id="baseConversionResult"></p>
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mt-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-list-ol me-2"></i>Solution Steps</h6>
+                            </div>
+                            <div class="card-body">
+                                <pre id="baseConversionSolution" class="mb-0" style="white-space: pre-wrap;"></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unit Converter -->
+                    <div class="converter-section converter-card-uniform" id="unitSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-speedometer2 text-primary"></i> Unit Converter
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Value</label>
+                                <input type="number" id="unitValueInput" class="form-control" placeholder="Enter value">
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Unit Type</label>
+                                <select id="unitTypeSelect" class="form-select" onchange="populateUnitOptions()">
+                                    <option value="">Select Type</option>
+                                    <option value="temperature">Temperature</option>
+                                    <option value="length">Length</option>
+                                    <option value="mass">Mass</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">From Unit</label>
+                                        <select id="fromUnitSelect" class="form-select"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">To Unit</label>
+                                        <select id="toUnitSelect" class="form-select"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="convertUnit()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-arrow-left-right me-2"></i> Convert Unit
+                        </button>
+
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Result</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="fs-4 fw-bold text-primary mb-0" id="unitConversionResult"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
         </div>
-
-        <div class="converter-section" id="unitConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Unit Converter</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="unitValueInput" class="text-gray-700 font-medium text-lg">Value:</label>
-                    <input type="number" id="unitValueInput" placeholder="Enter value" class="input-field">
-                </div>
-                <div class="input-group">
-                    <label for="unitTypeSelect" class="text-gray-700 font-medium text-lg">Unit Type:</label>
-                    <select id="unitTypeSelect" class="input-field" onchange="populateUnitOptions()">
-                        <option value="">Select Type</option>
-                        <option value="temperature">Temperature</option>
-                        <option value="length">Length</option>
-                        <option value="mass">Mass</option>
-                    </select>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <div class="input-group flex-1">
-                        <label for="fromUnitSelect" class="text-gray-700 font-medium text-lg">From Unit:</label>
-                        <select id="fromUnitSelect" class="input-field">
-                            </select>
-                    </div>
-                    <div class="input-group flex-1">
-                        <label for="toUnitSelect" class="text-gray-700 font-medium text-lg">To Unit:</label>
-                        <select id="toUnitSelect" class="input-field">
-                            </select>
-                    </div>
-                </div>
-                <button onclick="convertUnit()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                    </svg>
-                    <span>Convert Unit</span>
-                </button>
-                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
-                    <p class="text-base font-semibold text-blue-800">Converted Result:</p>
-                    <p id="unitConversionResult" class="text-xl font-extrabold text-blue-900 break-words mt-1"></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="converter-section" id="qrcodeConverterSection">
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">QR Code Generator</h2>
-            <div class="space-y-4">
-                <div class="input-group">
-                    <label for="qrcodeUrlInput" class="text-gray-700 font-medium text-lg">Enter URL or Text:</label>
-                    <input type="text" id="qrcodeUrlInput" placeholder="e.g., https://example.com or any text" class="input-field">
-                </div>
-                <button onclick="generateQRCode()" class="btn w-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
-                    <span>Generate QR Code</span>
-                </button>
-                <div id="qrcodePreview" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg shadow-inner hidden">
-                    <p class="text-base font-semibold text-gray-800 text-center mb-3">Your QR Code:</p>
-                    <div class="flex justify-center">
-                        <img id="qrcodeImage" src="" alt="QR Code" class="max-w-full h-auto border-2 border-gray-300 rounded-lg shadow-md">
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="static/script.js"></script>
+    
+    <script>
+        // Sync color inputs
+        document.getElementById('qrFgColor').addEventListener('input', (e) => {
+            document.getElementById('qrFgColorText').value = e.target.value;
+        });
+        document.getElementById('qrFgColorText').addEventListener('input', (e) => {
+            document.getElementById('qrFgColor').value = e.target.value;
+        });
+        document.getElementById('qrBgColor').addEventListener('input', (e) => {
+            document.getElementById('qrBgColorText').value = e.target.value;
+        });
+        document.getElementById('qrBgColorText').addEventListener('input', (e) => {
+            document.getElementById('qrBgColor').value = e.target.value;
+        });
+    </script>
 </body>
 </html>
