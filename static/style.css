@@ -16,6 +16,7 @@ body {
     /* display: flex; */
     /* flex-direction: column; */
     /* gap: 2.5rem; */
+    transition: height 200ms ease, min-height 200ms ease; /* Smooth height adjustments */
 }
 
 /* Base style for all converter sections */
@@ -28,6 +29,8 @@ body {
     flex-direction: column;
     gap: 1.5rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Subtle shadow for sections */
+    min-height: var(--section-min-height, 520px); /* Ensure consistent card height across tabs */
+    overflow: hidden; /* Prevent quick jumps on content change */
 }
 
 /* Style for the currently active section */
@@ -187,19 +190,6 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Specific styling for file inputs to make them look better */
-input[type="file"]::file-selector-button {
-    /* These styles are applied via Tailwind classes in index.html for better integration */
-    /* kept here as a fallback or for direct CSS customization */
-    /* background-color: #e0e7ef; */
-    /* color: #3b82f6; */
-    /* padding: 10px 16px; */
-    /* border: none; */
-    /* border-radius: 9999px; */
-    /* font-weight: 600; */
-    /* cursor: pointer; */
-    /* transition: background-color 0.2s; */
-}
-/* input[type="file"]::file-selector-button:hover {
-    background-color: #c9d8e5;
-} */
+/* Specific styling for file inputs to make them look better
+   Note: Tailwind utility classes are applied inline in HTML for these,
+   so we intentionally leave no extra CSS here to avoid duplication. */

@@ -11,6 +11,7 @@ import tempfile
 import sys # Import sys to check platform
 import requests # Import requests for URL fetching
 import subprocess
+import qrcode # Import qrcode for QR code generation
 
 # Conditional import for pywin32, only on Windows
 if sys.platform == "win32":
@@ -564,6 +565,54 @@ def resize_image_api():
         logger.exception("An error occurred during image resizing.")
         return jsonify({'error': f'An error occurred during image resizing: {e}'}), 500
 
+@app.route('/api/generate-qrcode', methods=['POST'])
+def generate_qrcode_api():
+    logger.info("Received request for QR code generation.")
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No JSON data provided.'}), 400
+    
+    url = data.get('url')
+    if not url or url.strip() == '':
+        return jsonify({'error': 'No URL provided for QR code generation.'}), 400
+    
+    url = url.strip()
+    
+    try:
+        # Create QR code instance
+        qr = qrcode.QRCode(
+            version=1,  # Controls the size of the QR code (1 is smallest)
+            error_correction=qrcode.constants.ERROR_CORRECT_L,  # Error correction level
+            box_size=10,  # Size of each box in pixels
+            border=4,  # Border size in boxes
+        )
+        
+        # Add data to the QR code
+        qr.add_data(url)
+        qr.make(fit=True)
+        
+        # Create an image from the QR code
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Save to buffer
+        output_buffer = io.BytesIO()
+        qr_img.save(output_buffer, format='PNG')
+        output_buffer.seek(0)
+        
+        logger.info(f"QR code generated successfully for URL: {url}")
+        
+        response = send_file(
+            output_buffer,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name='qrcode.png'
+        )
+        return response
+        
+    except Exception as e:
+        logger.exception("An error occurred during QR code generation.")
+        return jsonify({'error': f'An error occurred during QR code generation: {e}'}), 500
+
 @app.route('/api/convert-unit', methods=['POST'])
 def convert_unit_api():
     logger.info("Received request for unit conversion.")
@@ -667,8 +716,3 @@ def convert_unit_api():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-    #cd "C:\Users\ASUS\OneDrive - Asia Pacific College\Documents\Alobin ICT241\PDF converter"
-    #& "C:\Users\ASUS\AppData\Local\Programs\Python\Python311\python.exe" ".\app.py"

@@ -288,6 +288,64 @@ async function resizeImage() {
     }
 }
 
+// Function to handle QR Code Generation
+async function generateQRCode() {
+    const qrcodeUrlInput = document.getElementById('qrcodeUrlInput');
+    const qrcodePreview = document.getElementById('qrcodePreview');
+    const qrcodeImage = document.getElementById('qrcodeImage');
+    
+    const url = qrcodeUrlInput.value.trim();
+    
+    if (!url) {
+        showMessageBox('Please enter a URL or text to generate a QR code.');
+        return;
+    }
+
+    showLoading();
+    try {
+        const response = await fetch('/api/generate-qrcode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                url: url
+            }),
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            
+            // Create object URL for preview
+            const previewUrl = window.URL.createObjectURL(blob);
+            qrcodeImage.src = previewUrl;
+            qrcodePreview.classList.remove('hidden');
+            
+            // Also trigger download
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = 'qrcode.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            showMessageBox('QR Code generated successfully! Download started.');
+        } else {
+            const errorData = await response.json();
+            showMessageBox(`Error: ${errorData.error || response.statusText}`);
+            qrcodePreview.classList.add('hidden');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessageBox('An unexpected error occurred during QR code generation.');
+        qrcodePreview.classList.add('hidden');
+    } finally {
+        hideLoading();
+    }
+}
+
 // NEW: Unit Converter logic
 async function convertUnit() {
     const value = document.getElementById('unitValueInput').value;
@@ -420,13 +478,47 @@ function populateUnitOptions() {
     }
 }
 
-// Initial setup to show the first section on page load
+// Initial setup to show the first section on page load + normalize heights
 document.addEventListener('DOMContentLoaded', () => {
+    // Compute and lock a consistent min-height across sections
+    setUniformSectionHeight();
+    window.addEventListener('resize', debounce(setUniformSectionHeight, 150));
+
     showSection('imageConverterSection');
     populateUnitOptions(); // Populate units for the first time
 });
 
-// Function to handle tab switching
+// Determine tallest converter-section and set CSS variable for stable card height
+function setUniformSectionHeight() {
+    const sections = Array.from(document.querySelectorAll('.converter-section'));
+    if (sections.length === 0) return;
+
+    let maxHeight = 0;
+    // Temporarily ensure all sections are measurable
+    const previouslyActive = sections.find(s => s.classList.contains('active'));
+    sections.forEach(s => {
+        const wasHidden = !s.classList.contains('active');
+        if (wasHidden) s.classList.add('active');
+        // Measure natural height
+        const h = s.scrollHeight;
+        if (h > maxHeight) maxHeight = h;
+        if (wasHidden) s.classList.remove('active');
+    });
+    // Add some breathing room
+    const minHeight = Math.max(520, maxHeight);
+    document.documentElement.style.setProperty('--section-min-height', `${minHeight}px`);
+}
+
+// Simple debounce helper
+function debounce(fn, wait) {
+    let t;
+    return function(...args) {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+    };
+}
+
+// Function to handle tab switching (kept in JS file as the single source of truth)
 function showSection(sectionId) {
     // Hide all sections
     document.querySelectorAll('.converter-section').forEach(section => {
@@ -446,6 +538,9 @@ function showSection(sectionId) {
     if (activeTabButton) {
         activeTabButton.classList.add('active');
     }
+
+    // After switching, ensure the height stays consistent (in case content changed)
+    setUniformSectionHeight();
 }
 
 function renderBaseSolutionHTML(solutionText) {
