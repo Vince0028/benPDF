@@ -136,11 +136,13 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
 def convert_docx_to_pdf(input_path, output_path):
     """Convert DOCX to PDF using multiple fallback methods"""
     
+    # Import os at function level so it's available for all methods
+    import os
+    
     # Method 1: Try using comtypes (Windows)
     if sys.platform == "win32":
         try:
             import comtypes.client
-            import os
             import pythoncom
             pythoncom.CoInitialize()
             try:
@@ -1078,4 +1080,8 @@ def convert_unit_api():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    # Use environment variable for debug mode (default False for production)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
