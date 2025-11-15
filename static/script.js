@@ -117,9 +117,18 @@ async function convertBase() {
         });
         if (response.ok) {
             const data = await response.json();
-            if (data.result) {
+            if (Array.isArray(data.results)) {
+                const items = data.results.map((r, idx) => {
+                    const inputLabel = (data.inputs && data.inputs[idx]) ? data.inputs[idx] : `#${idx+1}`;
+                    const solutionHtml = (data.solutions && data.solutions[idx]) ? `<div class=\"mt-2\">${renderBaseSolutionHTML(data.solutions[idx])}</div>` : '';
+                    return `<li><code>${inputLabel}</code> → <strong>${r}</strong>${solutionHtml}</li>`;
+                });
+                resultDisplay.innerHTML = `<ol class=\"mb-2\">${items.join('')}</ol>`;
+                solutionDisplay.innerHTML = '';
+                showMessageBox('Base conversion successful!');
+            } else if (data.result) {
                 resultDisplay.innerText = data.result;
-                solutionDisplay.innerHTML = renderBaseSolutionHTML(data.solution);
+                solutionDisplay.innerHTML = renderBaseSolutionHTML(data.solution || '');
                 showMessageBox('Base conversion successful!');
             } else {
                 resultDisplay.innerText = 'Error: No result.';
@@ -240,6 +249,61 @@ async function resizeImage() {
         hideLoading();
     }
 }
+
+async function removeBackground() {
+    const bgRemoveFileInput = document.getElementById('bgRemoveFileInput');
+    const bgRemoveUrlInput = document.getElementById('bgRemoveUrlInput');
+    const formData = new FormData();
+    
+    if (bgRemoveFileInput.files.length > 0) {
+        formData.append('file', bgRemoveFileInput.files[0]);
+    } else if (bgRemoveUrlInput.value.trim() !== '') {
+        formData.append('url', bgRemoveUrlInput.value.trim());
+    } else {
+        showMessageBox('Please upload an image file or provide an image URL.');
+        return;
+    }
+    
+    showLoading();
+    try {
+        const response = await fetch('/api/remove-background', {
+            method: 'POST',
+            body: formData,
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = 'image_no_bg.png'; 
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            showMessageBox('Background removed successfully! Download started.');
+        } else {
+            const errorData = await response.json();
+            showMessageBox(`Error: ${errorData.error || response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessageBox('An unexpected error occurred during background removal.');
+    } finally {
+        hideLoading();
+    }
+}
+
 async function generateQRCode() {
     const qrcodeUrlInput = document.getElementById('qrcodeUrlInput');
     const qrcodeLogoInput = document.getElementById('qrcodeLogoInput');

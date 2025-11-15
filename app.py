@@ -12,6 +12,15 @@ import sys # Import sys to check platform
 import requests # Import requests for URL fetching
 import subprocess
 import qrcode # Import qrcode for QR code generation
+from decimal import Decimal, getcontext
+
+# Optional import for background removal
+try:
+    from rembg import remove as rembg_remove
+    REMBG_AVAILABLE = True
+except ImportError:
+    REMBG_AVAILABLE = False
+    logging.warning("rembg not available. Background removal feature will be disabled.")
 
 # Conditional import for pywin32, only on Windows
 if sys.platform == "win32":
@@ -132,6 +141,75 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
         steps.append(f"\nStep 2: Target is already Decimal: {decimal_value}")
 
     return "\n".join(steps)
+
+# --- Base conversion helpers that support fractional values ---
+def _digit_to_value(ch: str) -> int:
+    if ch.isdigit():
+        return int(ch)
+    return 10 + ord(ch) - ord('A')
+
+def _value_to_digit(v: int) -> str:
+    if v < 10:
+        return str(v)
+    return chr(ord('A') + (v - 10))
+
+def parse_base_to_decimal(value_str: str, base: int) -> Decimal:
+    """Parse a base-N string (supports optional fractional part) into Decimal."""
+    getcontext().prec = 50
+    s = value_str.upper()
+    if '.' in s:
+        int_part_s, frac_part_s = s.split('.', 1)
+    else:
+        int_part_s, frac_part_s = s, ''
+    # Integer part
+    int_val = Decimal(0)
+    for ch in int_part_s:
+        if ch == '':
+            continue
+        d = _digit_to_value(ch)
+        int_val = int_val * base + d
+    # Fractional part
+    frac_val = Decimal(0)
+    power = Decimal(base)
+    for ch in frac_part_s:
+        d = _digit_to_value(ch)
+        frac_val += Decimal(d) / power
+        power *= base
+    return int_val + frac_val
+
+def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
+    """Format Decimal value into base-N string with up to 'precision' fractional digits."""
+    getcontext().prec = 50
+    # Separate integer and fractional parts
+    int_part = int(val)  # floor for positive numbers
+    frac_part = val - Decimal(int_part)
+    # Integer part conversion
+    if int_part == 0:
+        int_digits = ['0']
+    else:
+        int_digits = []
+        n = int_part
+        while n > 0:
+            n, rem = divmod(n, base)
+            int_digits.append(_value_to_digit(int(rem)))
+        int_digits.reverse()
+    # Fractional part conversion
+    if precision > 0 and frac_part != 0:
+        frac_digits = []
+        f = frac_part
+        for _ in range(precision):
+            f *= base
+            digit = int(f)
+            frac_digits.append(_value_to_digit(digit))
+            f -= digit
+            if f == 0:
+                break
+        # Trim trailing zeros
+        while frac_digits and frac_digits[-1] == '0':
+            frac_digits.pop()
+        if frac_digits:
+            return ''.join(int_digits) + '.' + ''.join(frac_digits)
+    return ''.join(int_digits)
 
 def convert_docx_to_pdf(input_path, output_path):
     """Convert DOCX to PDF using multiple fallback methods"""
@@ -503,44 +581,49 @@ def convert_base_api():
     source_base = source_info['int']
     target_base = target_info['int']
     
-    # Input validation based on source base
-    input_value = input_value.upper() # Convert hex input to uppercase for consistency
-    if source_base == 2:
-        if not re.fullmatch(r'[01]+', input_value):
-            return jsonify({'error': 'Invalid binary input. Must contain only 0s and 1s.'}), 400
-    elif source_base == 8:
-        if not re.fullmatch(r'[0-7]+', input_value):
-            return jsonify({'error': 'Invalid octal input. Must contain digits 0-7.'}), 400
-    elif source_base == 10:
-        if not re.fullmatch(r'[0-9]+', input_value):
-            return jsonify({'error': 'Invalid decimal input. Must contain only 0-9.'}), 400
-    elif source_base == 16:
-        if not re.fullmatch(r'[0-9A-F]+', input_value):
-            return jsonify({'error': 'Invalid hexadecimal input. Must contain 0-9 and A-F.'}), 400
+    # Allow multiple inputs separated by commas, spaces, or newlines
+    tokens = []
+    for part in re.split(r'[\s,]+', input_value.strip()):
+        if part:
+            tokens.append(part)
+    if not tokens:
+        return jsonify({'error': 'No numbers provided.'}), 400
 
+    results = []
+    solutions = []
     try:
-        # Convert input_value to an integer (decimal representation)
-        decimal_value = int(input_value, source_base)
-        logger.info(f"Converted '{input_value}' from base {source_base} to decimal: {decimal_value}")
+        for token in tokens:
+            token_u = token.upper()
+            # Validation regex: allow optional single decimal point for fractional part
+            if source_base == 2:
+                if not re.fullmatch(r'[01]+(\.[01]+)?', token_u):
+                    return jsonify({'error': f"Invalid binary input '{token}'. Use only 0/1 with optional fractional part."}), 400
+            elif source_base == 8:
+                if not re.fullmatch(r'[0-7]+(\.[0-7]+)?', token_u):
+                    return jsonify({'error': f"Invalid octal input '{token}'. Use digits 0-7 with optional fractional part."}), 400
+            elif source_base == 10:
+                if not re.fullmatch(r'[0-9]+(\.[0-9]+)?', token_u):
+                    return jsonify({'error': f"Invalid decimal input '{token}'. Use digits 0-9 with optional fractional part."}), 400
+            elif source_base == 16:
+                if not re.fullmatch(r'[0-9A-F]+(\.[0-9A-F]+)?', token_u):
+                    return jsonify({'error': f"Invalid hexadecimal input '{token}'. Use 0-9/A-F with optional fractional part."}), 400
 
-        # Convert decimal_value to the target base
-        converted_value = ""
-        if target_base == 2:
-            converted_value = bin(decimal_value)[2:] # Remove "0b" prefix
-        elif target_base == 8:
-            converted_value = oct(decimal_value)[2:] # Remove "0o" prefix
-        elif target_base == 10:
-            converted_value = str(decimal_value)
-        elif target_base == 16:
-            converted_value = hex(decimal_value)[2:].upper() # Remove "0x" prefix and make uppercase
-        
-        logger.info(f"Converted decimal '{decimal_value}' to base {target_base}: {converted_value}")
+            # Convert token to Decimal (supports fraction)
+            dec_val = parse_base_to_decimal(token_u, source_base)
+            logger.info(f"Converted '{token_u}' from base {source_base} to decimal: {dec_val}")
 
-        # Generate solution steps
-        # Pass converted_value to generate_conversion_steps to handle summarized output
-        solution_steps = generate_conversion_steps(input_value, source_base, target_base, decimal_value)
-        
-        return jsonify({'result': converted_value, 'solution': solution_steps}), 200
+            # Format into target base (support fractional)
+            converted_token = format_decimal_to_base(dec_val, target_base)
+            results.append(converted_token)
+            # For solution, show steps for integer part. Fractional explanation can be added later.
+            int_part = str(int(dec_val))
+            solutions.append(generate_conversion_steps(token_u, source_base, target_base, int(int_part)))
+
+        # For backward compatibility, when a single value is provided, return result as string
+        if len(results) == 1:
+            return jsonify({'input': tokens[0], 'result': results[0], 'results': results, 'solution': solutions[0], 'solutions': solutions}), 200
+        else:
+            return jsonify({'inputs': tokens, 'results': results, 'solutions': solutions}), 200
 
     except ValueError as e:
         logger.error(f"ValueError during base conversion: {e}")
@@ -1077,6 +1160,81 @@ def convert_unit_api():
         return jsonify({'result': round(converted_value, 4)}), 200 # Round for display
     else:
         return jsonify({'error': 'Conversion not possible between specified units.'}), 400
+
+@app.route('/api/remove-background', methods=['POST'])
+def remove_background_api():
+    logger.info("Received request for background removal.")
+    
+    # Check if rembg is available
+    if not REMBG_AVAILABLE:
+        return jsonify({'error': 'Background removal feature is not available. Please install rembg: pip install rembg'}), 503
+    
+    file = None
+    image_url = None
+
+    if 'file' in request.files and request.files['file'].filename != '':
+        file = request.files['file']
+        logger.info(f"File uploaded for background removal: {file.filename}")
+        if not allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS):
+            logger.warning(f"Invalid image file extension: {file.filename}")
+            return jsonify({'error': 'Invalid image file type. Allowed: PNG, JPG, JPEG, GIF, WEBP'}), 400
+    elif 'url' in request.form and request.form['url'].strip() != '':
+        image_url = request.form['url'].strip()
+        logger.info(f"Image URL provided for background removal: {image_url}")
+        if not (image_url.startswith('http://') or image_url.startswith('https://')):
+            logger.warning(f"Invalid URL format: {image_url}")
+            return jsonify({'error': 'Invalid URL format. Must start with http:// or https://'}), 400
+    else:
+        logger.warning("No file or URL provided for background removal.")
+        return jsonify({'error': 'No image file uploaded or URL provided.'}), 400
+
+    output_buffer = io.BytesIO()
+    
+    try:
+        input_data = None
+        original_filename = "image"
+        
+        if file:
+            original_filename = os.path.splitext(file.filename or "image")[0]
+            file.stream.seek(0)
+            input_data = file.stream.read()
+            logger.info(f"Read {len(input_data)} bytes from uploaded file")
+        elif image_url:
+            logger.info(f"Fetching image from URL: {image_url}")
+            response = requests.get(image_url, stream=True)
+            response.raise_for_status()
+            input_data = response.content
+            logger.info(f"Image fetched from URL, size: {len(input_data)} bytes")
+
+        # Remove background using rembg
+        logger.info("Processing background removal...")
+        output_data = rembg_remove(input_data)
+        
+        # Convert to PIL Image to ensure proper format
+        img = Image.open(io.BytesIO(output_data))
+        
+        # Save as PNG (to preserve transparency)
+        img.save(output_buffer, format='PNG')
+        output_buffer.seek(0)
+
+        converted_filename = f"{original_filename}_no_bg.png"
+        logger.info(f"Background removed successfully: {converted_filename}")
+
+        response = send_file(
+            output_buffer,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=converted_filename
+        )
+        logger.info(f"Sending image with background removed: {converted_filename}")
+        return response
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching URL: {e}")
+        return jsonify({'error': f"Failed to fetch image from URL: {e}"}), 500
+    except Exception as e:
+        logger.exception("An unexpected error occurred during background removal.")
+        return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
 
 
 if __name__ == '__main__':

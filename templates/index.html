@@ -127,6 +127,9 @@
                             <button class="list-group-item list-group-item-action" onclick="showSection('resizerSection')">
                                 <i class="bi bi-arrows-fullscreen me-2"></i> Image Resizer
                             </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('bgRemoverSection')">
+                                <i class="bi bi-scissors me-2"></i> Background Remover
+                            </button>
                             <button class="list-group-item list-group-item-action" onclick="showSection('baseSection')">
                                 <i class="bi bi-calculator me-2"></i> Base Converter
                             </button>
@@ -347,6 +350,40 @@
                         </button>
                     </div>
 
+                    <div class="converter-section converter-card-uniform" id="bgRemoverSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-scissors text-primary"></i> Background Remover
+                        </h3>
+                        
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Upload Image File</label>
+                                <input type="file" id="bgRemoveFileInput" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control">
+                                <small class="text-muted">Supported formats: PNG, JPG, JPEG, GIF, WEBP</small>
+                            </div>
+                        </div>
+
+                        <div class="text-center my-3">
+                            <span class="badge bg-secondary px-3 py-2">OR</span>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Enter Image URL</label>
+                                <input type="text" id="bgRemoveUrlInput" class="form-control" placeholder="https://example.com/image.jpg">
+                            </div>
+                        </div>
+
+                        <button onclick="removeBackground()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-magic me-2"></i> Remove Background
+                        </button>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Note:</strong> The background will be automatically detected and removed. Output is PNG with transparency.
+                        </div>
+                    </div>
+
                     <div class="converter-section converter-card-uniform" id="baseSection">
                         <h3 class="fw-bold mb-4">
                             <i class="bi bi-calculator text-primary"></i> Number Base Converter
@@ -354,8 +391,8 @@
                         
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-body">
-                                <label class="form-label fw-semibold">Number to Convert</label>
-                                <input type="text" id="baseInputValue" class="form-control" placeholder="Enter number">
+                                <label class="form-label fw-semibold">Number(s) to Convert</label>
+                                <textarea id="baseInputValue" class="form-control" rows="3" placeholder="Enter one or more numbers separated by spaces, commas, or new lines. Supports fractional values like 101.11 (base 2)"></textarea>
                             </div>
                         </div>
 
@@ -419,7 +456,7 @@
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-body">
                                 <label class="form-label fw-semibold">Value</label>
-                                <input type="number" id="unitValueInput" class="form-control" placeholder="Enter value">
+                                <input type="number" id="unitValueInput" class="form-control" placeholder="Enter value" step="any">
                             </div>
                         </div>
 
