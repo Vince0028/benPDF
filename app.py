@@ -41,6 +41,18 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['CONVERTED_FOLDER'] = 'converted'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 # 100 MB limit for uploads (Adjusted from previous suggestion)
 
+# Prevent stale HTML in some hosting/CDN layers
+@app.after_request
+def add_no_cache_headers(response):
+    try:
+        if response.mimetype and 'text/html' in response.mimetype:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+    except Exception:
+        pass
+    return response
+
 # Ensure upload and converted directories exist (for local testing mostly)
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
@@ -1161,6 +1173,22 @@ def convert_unit_api():
     else:
         return jsonify({'error': 'Conversion not possible between specified units.'}), 400
 
+
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    """Simple health check endpoint for Render/containers."""
+    try:
+        # Minimal self-check: ensure template folder exists and upload dir is writable
+        templates_ok = os.path.isdir(app.template_folder)
+        uploads_ok = os.path.isdir(app.config['UPLOAD_FOLDER'])
+        return jsonify({
+            'status': 'ok',
+            'templates': templates_ok,
+            'uploads': uploads_ok,
+            'rembg': REMBG_AVAILABLE
+        }), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'detail': str(e)}), 500
 @app.route('/api/remove-background', methods=['POST'])
 def remove_background_api():
     logger.info("Received request for background removal.")

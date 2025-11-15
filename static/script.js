@@ -293,6 +293,11 @@ async function removeBackground() {
             window.URL.revokeObjectURL(url);
             showMessageBox('Background removed successfully! Download started.');
         } else {
+            if (response.status === 503) {
+                // Feature disabled on the server
+                showMessageBox('Background removal is not available on this deployment.');
+                return;
+            }
             const errorData = await response.json();
             showMessageBox(`Error: ${errorData.error || response.statusText}`);
         }
@@ -484,6 +489,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', debounce(setUniformSectionHeight, 150));
     showSection('imageConverterSection');
     populateUnitOptions(); 
+    // Feature detection: check if background removal is enabled on server
+    fetch('/healthz').then(r => r.json()).then(info => {
+        try {
+            if (!info.rembg) {
+                const btn = document.querySelector("[onclick=\"showSection('bgRemoverSection')\"]");
+                if (btn) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-secondary ms-2';
+                    badge.textContent = 'Unavailable';
+                    btn.appendChild(badge);
+                }
+                const alert = document.querySelector('#bgRemoverSection .alert');
+                if (alert) {
+                    alert.classList.remove('alert-info');
+                    alert.classList.add('alert-warning');
+                    alert.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i><strong>Note:</strong> Background removal is disabled on this deployment.';
+                }
+            }
+        } catch (_) {}
+    }).catch(() => {});
 });
 function setUniformSectionHeight() {
     const sections = Array.from(document.querySelectorAll('.converter-section'));
