@@ -84,6 +84,10 @@
             cursor: pointer;
         }
     </style>
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 </head>
 <body>
     
@@ -135,6 +139,9 @@
                             </button>
                             <button class="list-group-item list-group-item-action" onclick="showSection('unitSection')">
                                 <i class="bi bi-speedometer2 me-2"></i> Unit Converter
+                            </button>
+                            <button class="list-group-item list-group-item-action" onclick="showSection('calculusSection')">
+                                <i class="bi bi-braces me-2"></i> Calculus
                             </button>
                         </div>
                     </div>
@@ -501,6 +508,89 @@
                             </div>
                             <div class="card-body">
                                 <p class="fs-4 fw-bold text-primary mb-0" id="unitConversionResult"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="converter-section converter-card-uniform" id="calculusSection">
+                        <h3 class="fw-bold mb-4">
+                            <i class="bi bi-braces text-primary"></i> Calculus (Derivatives & Integrals)
+                        </h3>
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body">
+                                <label class="form-label fw-semibold">Expression</label>
+                                <textarea id="calculusExpressionInput" class="form-control" rows="3" placeholder="e.g. sin(x)*x^2 + 3*x"></textarea>
+                                <small class="text-muted">Supported: sin, cos, tan, log, exp, sqrt, pi, E. Use ^ for powers, implicit multiplication allowed (e.g. 2x -> 2*x).</small>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Variable</label>
+                                        <input type="text" id="calculusVariableInput" class="form-control" value="x" placeholder="Variable (e.g. x)">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Operation</label>
+                                        <select id="calculusOperationSelect" class="form-select" onchange="toggleCalculusFields()">
+                                            <option value="derivative" selected>Derivative</option>
+                                            <option value="integral">Integral</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="derivativeOrderContainer">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Derivative Order</label>
+                                        <input type="number" id="calculusOrderInput" class="form-control" value="1" min="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3" id="integralBoundsRow" style="display:none;">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Lower Bound (optional)</label>
+                                        <input type="text" id="calculusLowerInput" class="form-control" placeholder="e.g. 0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <label class="form-label fw-semibold">Upper Bound (optional)</label>
+                                        <input type="text" id="calculusUpperInput" class="form-control" placeholder="e.g. pi">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">Leave bounds empty for an indefinite integral.</small>
+                            </div>
+                        </div>
+                        <button onclick="computeCalculus()" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-cpu me-2"></i> Compute
+                        </button>
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Result</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="fs-5 fw-bold text-primary mb-1" id="calculusResult"></div>
+                                <div class="bg-light p-2 rounded" id="calculusLatex" style="min-height:40px;"></div>
+                                <div id="calculusNumeric" class="mt-2 text-secondary"></div>
+                            </div>
+                        </div>
+                        <div class="card border-0 shadow-sm mt-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-list-ol me-2"></i>Steps</h6>
+                            </div>
+                            <div class="card-body">
+                                <ol id="calculusSteps" class="mb-0" style="white-space: normal;"></ol>
                             </div>
                         </div>
                     </div>

@@ -13,6 +13,10 @@ import requests # Import requests for URL fetching
 import subprocess
 import qrcode # Import qrcode for QR code generation
 from decimal import Decimal, getcontext
+from sympy import symbols, diff, integrate, latex, Symbol, sin, cos, tan, asin, acos, atan, log, exp, sqrt, pi, E, Abs
+from sympy.core.add import Add
+from sympy.core.mul import Mul
+from sympy.parsing.sympy_parser import standard_transformations, implicit_multiplication_application, convert_xor, parse_expr
 
 # Optional import for background removal
 try:
@@ -1172,6 +1176,177 @@ def convert_unit_api():
         return jsonify({'result': round(converted_value, 4)}), 200 # Round for display
     else:
         return jsonify({'error': 'Conversion not possible between specified units.'}), 400
+
+
+@app.route('/api/calculus', methods=['POST'])
+def calculus_api():
+    """Perform symbolic derivative or integral calculations.
+    JSON body:
+      {
+        "expression": "sin(x)*x^2 + 3*x",
+        "operation": "derivative" | "integral",
+        "variable": "x",            # optional, default x
+        "order": 2,                  # optional for higher-order derivative
+        "lower": "0",               # optional for definite integral
+        "upper": "pi",              # optional for definite integral
+        "simplify": true             # optional, default true
+      }
+    Response includes plain result, LaTeX, and lightweight term-by-term steps.
+    """
+    logger.info("Received request for calculus computation.")
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error': 'No JSON body provided.'}), 400
+
+    expression_str = data.get('expression')
+    operation = data.get('operation', 'derivative').lower()
+    var_name = data.get('variable', 'x')
+    order = int(data.get('order', 1))
+    lower = data.get('lower')
+    upper = data.get('upper')
+    simplify_flag = bool(data.get('simplify', True))
+
+    if not expression_str or not isinstance(expression_str, str):
+        return jsonify({'error': 'expression must be a non-empty string'}), 400
+    if operation not in ['derivative', 'integral']:
+        return jsonify({'error': 'operation must be derivative or integral'}), 400
+    if order < 1:
+        return jsonify({'error': 'order must be >= 1'}), 400
+    # Basic variable name validation
+    if not isinstance(var_name, str) or not var_name.isidentifier():
+        return jsonify({'error': 'Invalid variable name.'}), 400
+
+    # Allowed symbols/functions environment
+    allowed_symbols = {var_name: Symbol(var_name)}
+    allowed_functions = {
+        'sin': sin, 'cos': cos, 'tan': tan,
+        'asin': asin, 'acos': acos, 'atan': atan,
+        'log': log, 'ln': log, 'exp': exp, 'sqrt': sqrt,
+        'pi': pi, 'E': E, 'abs': Abs
+    }
+    local_dict = {**allowed_symbols, **allowed_functions}
+
+    transformations = (standard_transformations + (implicit_multiplication_application,) + (convert_xor,))
+    try:
+        expr = parse_expr(expression_str, local_dict=local_dict, transformations=transformations, evaluate=True)
+    except Exception as e:
+        logger.warning(f"Sympify failed for expression '{expression_str}': {e}")
+        return jsonify({'error': f'Failed to parse expression: {e}'}), 400
+
+    var = allowed_symbols[var_name]
+
+    steps = []
+    steps_latex = []
+    result = None
+    is_definite = False
+    numeric_approx = None
+
+    def term_string(term):
+        try:
+            return str(term)
+        except Exception:
+            return repr(term)
+
+    if operation == 'derivative':
+        from sympy import expand
+        target_expr = expr
+        # Optional expansion step for readability
+        expanded = expand(target_expr)
+        if expanded != target_expr:
+            steps.append(f"Expand: {target_expr} = {expanded}")
+            steps_latex.append(f"{latex(target_expr)} = {latex(expanded)}")
+            target_expr = expanded
+        # Build steps via term-by-term differentiation if sum
+        if isinstance(target_expr, Add):
+            steps.append("Linearity: d/d%s of sum = sum of d/d%s of each term" % (var_name, var_name))
+            steps_latex.append(f"\n" + latex(target_expr))
+            for term in target_expr.args:
+                d_term = diff(term, var, 1)
+                steps.append(f"d/d{var_name} {term_string(term)} = {term_string(d_term)}")
+                steps_latex.append(f"\\frac{{d}}{{d{var_name}}}({latex(term)}) = {latex(d_term)}")
+            if order > 1:
+                higher = diff(target_expr, var, order)
+                steps.append(f"Higher order derivative (order {order}): {higher}")
+                steps_latex.append(f"\\frac{{d^{order}}}{{d{var_name}^{ {order} }}}({latex(target_expr)}) = {latex(higher)}")
+        else:
+            d_expr = diff(target_expr, var, order)
+            steps.append(f"Derivative order {order}: {d_expr}")
+            steps_latex.append(f"\\frac{{d^{order}}}{{d{var_name}^{ {order} }}}({latex(target_expr)}) = {latex(d_expr)}")
+        result = diff(expr, var, order)
+        if simplify_flag:
+            try:
+                result = result.simplify()
+            except Exception:
+                pass
+    else:  # integral
+        if lower is not None and upper is not None:
+            is_definite = True
+        from sympy import expand
+        target_expr = expr
+        expanded = expand(target_expr)
+        if expanded != target_expr:
+            steps.append(f"Expand: {target_expr} = {expanded}")
+            steps_latex.append(f"{latex(target_expr)} = {latex(expanded)}")
+            target_expr = expanded
+        if isinstance(target_expr, Add):
+            steps.append("Linearity: ∫ sum = sum of integrals")
+            steps_latex.append(latex(target_expr))
+            for term in target_expr.args:
+                int_term = integrate(term, var)
+                steps.append(f"∫ {term_string(term)} d{var_name} = {term_string(int_term)}")
+                steps_latex.append(f"∫ {latex(term)} \\mathrm{{d}}{var_name} = {latex(int_term)}")
+        else:
+            int_expr = integrate(target_expr, var)
+            steps.append(f"Integrate: ∫ {target_expr} d{var_name} = {int_expr}")
+            steps_latex.append(f"∫ {latex(target_expr)} \\mathrm{{d}}{var_name} = {latex(int_expr)}")
+        if is_definite:
+            try:
+                lower_expr = parse_expr(str(lower), local_dict=local_dict, transformations=transformations, evaluate=True)
+                upper_expr = parse_expr(str(upper), local_dict=local_dict, transformations=transformations, evaluate=True)
+            except Exception as e:
+                return jsonify({'error': f'Failed to parse bounds: {e}'}), 400
+            result = integrate(expr, (var, lower_expr, upper_expr))
+            steps.append(f"Evaluate definite integral from {lower} to {upper} -> {result}")
+            steps_latex.append(f"\\left[ {latex(integrate(expr, var))} \\right]_{{{latex(lower_expr)}}}^{{{latex(upper_expr)}}} = {latex(result)}")
+            try:
+                try:
+                    numeric_approx = float(result.evalf())
+                except Exception:
+                    numeric_approx = None
+            except Exception:
+                numeric_approx = None
+        else:
+            result = integrate(expr, var)
+            steps.append("Add constant of integration C.")
+            steps_latex.append("+ C")
+        if simplify_flag:
+            try:
+                result = result.simplify()
+            except Exception:
+                pass
+
+    # Prepare response
+    result_str = str(result)
+    try:
+        result_latex = latex(result)
+    except Exception:
+        result_latex = result_str
+
+    response_payload = {
+        'input': expression_str,
+        'operation': operation,
+        'variable': var_name,
+        'order': order if operation == 'derivative' else None,
+        'result': result_str,
+        'result_latex': result_latex,
+        'steps': steps,
+        'steps_latex': steps_latex,
+        'definite': is_definite,
+        'numeric_approx': numeric_approx,
+    }
+    if is_definite:
+        response_payload['bounds'] = {'lower': lower, 'upper': upper}
+    return jsonify(response_payload), 200
 
 
 @app.route('/healthz', methods=['GET'])

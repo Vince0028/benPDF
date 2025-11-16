@@ -599,3 +599,95 @@ function renderBaseSolutionHTML(solutionText) {
     html += '</ol>';
     return html;
 }
+
+// --- Calculus (Derivatives & Integrals) ---
+function toggleCalculusFields() {
+    const op = document.getElementById('calculusOperationSelect').value;
+    const orderContainer = document.getElementById('derivativeOrderContainer');
+    const boundsRow = document.getElementById('integralBoundsRow');
+    if (op === 'derivative') {
+        orderContainer.style.display = '';
+        boundsRow.style.display = 'none';
+    } else {
+        orderContainer.style.display = 'none';
+        boundsRow.style.display = '';
+    }
+}
+
+async function computeCalculus() {
+    const expr = document.getElementById('calculusExpressionInput').value.trim();
+    const variable = document.getElementById('calculusVariableInput').value.trim() || 'x';
+    const operation = document.getElementById('calculusOperationSelect').value;
+    const orderVal = document.getElementById('calculusOrderInput').value;
+    const lower = document.getElementById('calculusLowerInput').value.trim();
+    const upper = document.getElementById('calculusUpperInput').value.trim();
+    const resultEl = document.getElementById('calculusResult');
+    const latexEl = document.getElementById('calculusLatex');
+    const stepsEl = document.getElementById('calculusSteps');
+    const numericEl = document.getElementById('calculusNumeric');
+    resultEl.textContent = '';
+    latexEl.textContent = '';
+    stepsEl.textContent = '';
+    numericEl.textContent = '';
+    if (!expr) {
+        showMessageBox('Please enter an expression.');
+        return;
+    }
+    const payload = {
+        expression: expr,
+        operation: operation,
+        variable: variable
+    };
+    if (operation === 'derivative') {
+        payload.order = parseInt(orderVal || '1', 10);
+    } else { // integral
+        if (lower && upper) {
+            payload.lower = lower;
+            payload.upper = upper;
+        }
+    }
+    showLoading();
+    try {
+        const resp = await fetch('/api/calculus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+            showMessageBox(`Error: ${data.error || resp.statusText}`);
+            return;
+        }
+        resultEl.textContent = data.result;
+        // Render LaTeX result
+        latexEl.innerHTML = data.result_latex ? `$${data.result_latex}$` : '';
+        // Build steps list with LaTeX if available
+        stepsEl.innerHTML = '';
+        const plainSteps = data.steps || [];
+        const latexSteps = data.steps_latex || [];
+        for (let i = 0; i < plainSteps.length; i++) {
+            const li = document.createElement('li');
+            const latexVersion = latexSteps[i];
+            if (latexVersion) {
+                li.innerHTML = `$${latexVersion}$` + `<div class="text-muted small">${plainSteps[i]}</div>`;
+            } else {
+                li.textContent = plainSteps[i];
+            }
+            stepsEl.appendChild(li);
+        }
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([latexEl, stepsEl]).catch(err => console.error(err));
+        }
+        if (data.definite && data.numeric_approx !== null && data.numeric_approx !== undefined) {
+            numericEl.textContent = `Numeric Approximation ≈ ${data.numeric_approx}`;
+        } else if (data.definite) {
+            numericEl.textContent = 'Numeric approximation unavailable.';
+        }
+        showMessageBox('Calculus computation successful!');
+    } catch (e) {
+        console.error(e);
+        showMessageBox('Unexpected error during calculus computation.');
+    } finally {
+        hideLoading();
+    }
+}
