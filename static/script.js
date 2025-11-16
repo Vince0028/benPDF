@@ -601,6 +601,51 @@ function renderBaseSolutionHTML(solutionText) {
 }
 
 // --- Calculus (Derivatives & Integrals) ---
+function insertAtCursor(textarea, token, cursorOffsetFromEnd=0) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const original = textarea.value;
+    const before = original.substring(0, start);
+    const after = original.substring(end);
+    textarea.value = before + token + after;
+    let newPos = before.length + token.length + cursorOffsetFromEnd;
+    if (newPos < 0) newPos = before.length + token.length; // fallback
+    textarea.focus();
+    textarea.setSelectionRange(newPos, newPos);
+}
+
+function bindCalcToolbar() {
+    const bar = document.getElementById('calcSymbolBar');
+    if (!bar) return;
+    const textarea = document.getElementById('calculusExpressionInput');
+    bar.querySelectorAll('button[data-token]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const token = btn.getAttribute('data-token');
+            const offsetAttr = btn.getAttribute('data-cursor');
+            const offset = offsetAttr ? parseInt(offsetAttr, 10) : 0;
+            insertAtCursor(textarea, token, offset);
+        });
+    });
+}
+
+function copyExpression() {
+    const textarea = document.getElementById('calculusExpressionInput');
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        showMessageBox('Expression copied to clipboard');
+    }).catch(() => showMessageBox('Failed to copy expression'));
+}
+
+function copyLatexResult() {
+    const latexEl = document.getElementById('calculusLatex');
+    const raw = latexEl.textContent.replace(/^\s*LaTeX:\s*/, '').trim();
+    if (!raw) {
+        showMessageBox('No LaTeX result to copy');
+        return;
+    }
+    navigator.clipboard.writeText(raw).then(() => {
+        showMessageBox('LaTeX result copied');
+    }).catch(() => showMessageBox('Failed to copy LaTeX'));
+}
 function toggleCalculusFields() {
     const op = document.getElementById('calculusOperationSelect').value;
     const orderContainer = document.getElementById('derivativeOrderContainer');
@@ -691,3 +736,4 @@ async function computeCalculus() {
         hideLoading();
     }
 }
+    bindCalcToolbar();

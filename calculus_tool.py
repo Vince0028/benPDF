@@ -23,7 +23,7 @@ Extend recognized functions by editing ALLOWED_FUNCS.
 from __future__ import annotations
 import re
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from sympy import Symbol, sin, cos, tan, log, exp, sqrt, diff, integrate, latex
 from sympy.parsing.sympy_parser import (
     parse_expr,
@@ -50,12 +50,17 @@ FUNC_NAMES = list(ALLOWED_FUNCS.keys())
 PROTECT_MAP = {fn: f"__{fn.upper()}__" for fn in FUNC_NAMES}
 
 @dataclass
+class CalcStep:
+    plain: str
+    latex: str
+
+@dataclass
 class CalcResult:
     expr_str: str
     sympy_expr: Any
     result: Any
     latex: str
-    steps: Optional[list] = None
+    steps: List[CalcStep]
     numeric: Optional[float] = None
 
 
@@ -106,26 +111,26 @@ def derivative(expr_string: str, order: int = 1, var_name: str = 'x') -> CalcRes
         raise ValueError("order must be >= 1")
     expr, normalized, var = safe_parse(expr_string, var_name)
     current = expr
-    steps = [f"Normalized: {normalized}"]
+    steps: List[CalcStep] = [CalcStep(plain=f"Normalized: {normalized}", latex=latex(expr))]
     for k in range(order):
         current = diff(current, var)
-        steps.append(f"After diff {k+1}: {current}")
+        steps.append(CalcStep(plain=f"After derivative {k+1}: {current}", latex=latex(current)))
     simplified = current.simplify()
-    steps.append(f"Simplified: {simplified}")
+    steps.append(CalcStep(plain=f"Simplified: {simplified}", latex=latex(simplified)))
     return CalcResult(expr_str=normalized, sympy_expr=expr, result=simplified, latex=latex(simplified), steps=steps)
 
 
 def integral(expr_string: str, var_name: str = 'x', lower: Optional[str] = None, upper: Optional[str] = None) -> CalcResult:
     expr, normalized, var = safe_parse(expr_string, var_name)
-    steps = [f"Normalized: {normalized}"]
+    steps: List[CalcStep] = [CalcStep(plain=f"Normalized: {normalized}", latex=latex(expr))]
     if lower is not None and upper is not None:
         # Definite integral
         parsed_lower, norm_lower, _ = safe_parse(lower, var_name)
         parsed_upper, norm_upper, _ = safe_parse(upper, var_name)
         integ = integrate(expr, (var, parsed_lower, parsed_upper))
-        steps.append(f"Integrate from {norm_lower} to {norm_upper}: {integ}")
+        steps.append(CalcStep(plain=f"Integrate from {norm_lower} to {norm_upper}: {integ}", latex=latex(integ)))
         simplified = integ.simplify()
-        steps.append(f"Simplified: {simplified}")
+        steps.append(CalcStep(plain=f"Simplified: {simplified}", latex=latex(simplified)))
         try:
             numeric_val = float(simplified.evalf())
         except Exception:
@@ -133,9 +138,9 @@ def integral(expr_string: str, var_name: str = 'x', lower: Optional[str] = None,
         return CalcResult(expr_str=normalized, sympy_expr=expr, result=simplified, latex=latex(simplified), steps=steps, numeric=numeric_val)
     else:
         integ = integrate(expr, var)
-        steps.append(f"Indefinite integral: {integ} + C")
+        steps.append(CalcStep(plain=f"Indefinite integral: {integ} + C", latex=latex(integ) + "+ C"))
         simplified = integ.simplify()
-        steps.append(f"Simplified: {simplified} + C")
+        steps.append(CalcStep(plain=f"Simplified: {simplified} + C", latex=latex(simplified) + "+ C"))
         return CalcResult(expr_str=normalized, sympy_expr=expr, result=simplified, latex=latex(simplified), steps=steps)
 
 
@@ -155,9 +160,9 @@ def _demo():
         try:
             res = derivative(expr, order)
             # Clean output: only LaTeX form of the final simplified derivative
-            print(f"Input: {expr}\n Order: {order}\n Normalized: {res.expr_str}\n Result (LaTeX): {latex(res.result)}\n Steps:")
+            print(f"Input: {expr}\n Order: {order}\n Normalized: {res.expr_str}\n Result (LaTeX): {res.latex}\n Steps (LaTeX only):")
             for st in res.steps:
-                print("  -", st)
+                print("  -", st.latex)
             print("-")
         except Exception as e:
             print(f"Failed for {expr}: {e}")
@@ -165,10 +170,10 @@ def _demo():
     for expr in ["x2", "sin(x)", "exp(2x)"]:
         try:
             indef = integral(expr)
-            print(f"Indefinite {expr} -> {latex(indef.result)} + C")
+            print(f"Indefinite {expr} -> {indef.latex} + C")
             definite = integral(expr, lower="0", upper="2")
             approx = f" ≈ {definite.numeric}" if definite.numeric is not None else ""
-            print(f"Definite {expr} from 0 to 2 -> {latex(definite.result)}{approx}")
+            print(f"Definite {expr} from 0 to 2 -> {definite.latex}{approx}")
         except Exception as e:
             print(f"Integral failed for {expr}: {e}")
 
