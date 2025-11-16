@@ -439,29 +439,6 @@
                         <div class="card border-0 shadow-sm mt-4">
                             <div class="card-header bg-primary text-white">
                                 <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Result</h6>
-                                <div class="mb-2 d-flex flex-wrap gap-1" id="calcSymbolBar">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="x">x</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="y">y</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="^">^</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="sqrt()" data-cursor="-1">√</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="sin()" data-cursor="-1">sin</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="cos()" data-cursor="-1">cos</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="tan()" data-cursor="-1">tan</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="log()" data-cursor="-1">log</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="exp()" data-cursor="-1">exp</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="pi">π</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="E">e</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="(" >(</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token=")" >)</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="*">*</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="/">/</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="+">+</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="-">−</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="x^2" >x²</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="( )/( )" data-cursor="-5">frac</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="d/dx()" data-cursor="-1">d/dx</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="int_()^()" data-cursor="-3">∫</button>
-                                </div>
                             </div>
                             <div class="card-body">
                                 <p class="fs-4 fw-bold text-primary mb-0" id="baseConversionResult"></p>
@@ -540,6 +517,30 @@
                         </h3>
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-body">
+                                <label class="form-label fw-semibold">Quick Insert Symbols</label>
+                                <div class="mb-2 d-flex flex-wrap gap-1" id="calcSymbolBar">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="x">x</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="y">y</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="^">^</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="sqrt()" data-cursor="-1">√</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="sin()" data-cursor="-1">sin</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="cos()" data-cursor="-1">cos</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="tan()" data-cursor="-1">tan</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="log()" data-cursor="-1">log</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="exp()" data-cursor="-1">exp</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="pi">π</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="E">e</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="(" >(</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token=")" >)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="*">*</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="/">/</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="+">+</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="-">−</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="x^2" >x²</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="( )/( )" data-cursor="-5">frac</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="d/dx()" data-cursor="-1">d/dx</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-token="int_()^()" data-cursor="-3">∫</button>
+                                </div>
                                 <label class="form-label fw-semibold">Expression</label>
                                 <textarea id="calculusExpressionInput" class="form-control" rows="3" placeholder="e.g. sin(x)*x^2 + 3*x"></textarea>
                                 <small class="text-muted">Supported: sin, cos, tan, log, exp, sqrt, pi, E. Use ^ for powers, implicit multiplication allowed (e.g. 2x -> 2*x).</small>
