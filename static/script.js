@@ -488,7 +488,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setUniformSectionHeight();
     window.addEventListener('resize', debounce(setUniformSectionHeight, 150));
     showSection('imageConverterSection');
-    populateUnitOptions(); 
+    populateUnitOptions();
+    bindCalcToolbar(); // Bind calculus toolbar buttons
     // Feature detection: check if background removal is enabled on server
     fetch('/healthz').then(r => r.json()).then(info => {
         try {
@@ -736,4 +737,3 @@ async function computeCalculus() {
         hideLoading();
     }
 }
-    bindCalcToolbar();
