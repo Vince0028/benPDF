@@ -949,7 +949,7 @@ def generate_qrcode_api():
                 except Exception as e1:
                     logger.warning(f"Method 1 (BytesIO) failed: {e1}")
                     
-                    # Method 1b: If it's HEIF/AVIF, try pillow_heif directly
+                    
                     if detected_format in ['AVIF', 'HEIF']:
                         try:
                             import pillow_heif
