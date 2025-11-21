@@ -305,6 +305,7 @@ def convert_docx_to_pdf(input_path, output_path):
 
 @app.route('/')
 def index():
+    """Render the main index page."""
     return render_template('index.html')
 
 @app.route('/api/convert-image', methods=['POST'])
