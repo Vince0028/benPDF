@@ -228,7 +228,7 @@ def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
     return ''.join(int_digits)
 
 def convert_docx_to_pdf(input_path, output_path):
-    """Convert DOCX to PDF using multiple fallback methods."""
+    """Convert DOCX to PDF using multiple fallback methods"""
     
     # Import os at function level so it's available for all methods
     import os
