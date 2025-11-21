@@ -33,7 +33,7 @@ if sys.platform == "win32":
     except ImportError:
         logging.warning("pythoncom not found. docx2pdf conversion might fail on Windows if not installed.")
 
-# Set up logging
+# Set up logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
