@@ -918,7 +918,7 @@ def generate_qrcode_api():
                         detected_format = 'GIF'
                         logger.info("Detected GIF signature")
                     elif b'ftyp' in file_content[:12]:
-                        # HEIF/AVIF container format
+                        
                         if b'avif' in file_content[:32] or b'avis' in file_content[:32]:
                             detected_format = 'AVIF'
                             logger.info("Detected AVIF signature")
