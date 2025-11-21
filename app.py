@@ -931,7 +931,7 @@ def generate_qrcode_api():
                     else:
                         logger.warning(f"Unknown or invalid image signature - file may be corrupted or not an image")
                 
-                # Try to register HEIF/AVIF support if available
+                
                 try:
                     from pillow_heif import register_heif_opener
                     register_heif_opener()
