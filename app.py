@@ -72,6 +72,7 @@ ALLOWED_ICO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
 
 def allowed_file(filename, allowed_extensions):
+    """Check if file has allowed extension."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
