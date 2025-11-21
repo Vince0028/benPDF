@@ -965,7 +965,7 @@ def generate_qrcode_api():
                             logger.warning(f"Method 1b (pillow_heif direct) failed: {e1b}")
                             logo_img = None
                     
-                    # Method 2: Try using opencv to read and convert
+                    
                     if not logo_img:
                         try:
                             import cv2
