@@ -903,7 +903,7 @@ def generate_qrcode_api():
                     magic_bytes = file_content[:8]
                     logger.info(f"File signature (first 8 bytes): {magic_bytes.hex()}")
                     
-                    # Detect actual file format from signature
+                    
                     detected_format = None
                     if file_content[:2] == b'\xff\xd8':
                         detected_format = 'JPEG'
