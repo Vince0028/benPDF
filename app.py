@@ -330,7 +330,7 @@ def convert_image_api():
         return jsonify({'error': 'No image file uploaded or URL provided.'}), 400
 
     output_buffer = io.BytesIO()
-    converted_filename = "converted_image.png"  # Output format is fixed to PNG here
+    converted_filename = "converted_image.png" # Output format is fixed to PNG here
 
     try:
         img = None
