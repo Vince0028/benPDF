@@ -43,7 +43,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 # Configuration for upload and converted folders
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['CONVERTED_FOLDER'] = 'converted'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 # 100 MB limit for uploads (Adjusted from previous suggestion)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB limit for uploads (Adjusted from previous suggestion)
 
 # Prevent stale HTML in some hosting/CDN layers
 @app.after_request
