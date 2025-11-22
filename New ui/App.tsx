@@ -18,7 +18,7 @@ const App: React.FC = () => {
           <Route path="/doc-convert" element={
             <GenericFileTool 
               title="Document Converter" 
-              description=""
+              description="PDF ↔ DOCX conversion"
               endpoint="/api/convert-document"
               accept=".pdf,.docx"
               supportsUrl={false}
@@ -27,7 +27,7 @@ const App: React.FC = () => {
           <Route path="/image-convert" element={
             <GenericFileTool 
               title="Image Converter" 
-              description=""
+              description="Convert images to PNG"
               endpoint="/api/convert-image"
               accept=".png,.jpg,.jpeg,.gif,.webp,.heic,.avif"
               supportsUrl={true}
@@ -36,7 +36,7 @@ const App: React.FC = () => {
           <Route path="/ico-convert" element={
             <GenericFileTool 
               title="ICO Converter" 
-              description=""
+              description="Create .ico favicons from images"
               endpoint="/api/convert-to-ico"
               accept=".png,.jpg,.jpeg,.webp"
               supportsUrl={false}
@@ -45,7 +45,7 @@ const App: React.FC = () => {
            <Route path="/remove-bg" element={
             <GenericFileTool 
               title="Background Remover" 
-              description=""
+              description="Remove image backgrounds (PNG output)"
               endpoint="/api/remove-background"
               accept=".png,.jpg,.jpeg,.webp"
               supportsUrl={true}
@@ -53,11 +53,11 @@ const App: React.FC = () => {
           } />
             <Route path="/image-resize" element={
              <GenericFileTool 
-              title="Image Resizer"
-              description=""
-              endpoint="/api/resize-image"
-              accept=".png,.jpg,.jpeg,.gif,.webp"
-              supportsUrl={false}
+               title="Image Resizer"
+               description="Resize images to specific dimensions"
+               endpoint="/api/resize-image"
+               accept=".png,.jpg,.jpeg,.gif,.webp"
+               supportsUrl={false}
               extraFields={
                 <div className="grid grid-cols-2 gap-4">
                   <div>
