@@ -94,7 +94,9 @@ const GenericFileTool: React.FC<ToolConfig> = ({
     <div className="max-w-3xl mx-auto pt-4">
       <div className="mb-8 border-l-4 border-indigo-500 pl-6 py-2">
         <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">{title}</h2>
-        <p className="text-slate-400 font-mono text-sm">// {description}</p>
+        {description && (
+          <p className="text-slate-400 font-mono text-sm">{description}</p>
+        )}
       </div>
 
       <div className="bg-slate-900 border border-white/10 relative">
