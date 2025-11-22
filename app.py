@@ -832,7 +832,7 @@ def resize_image_api():
 @app.route('/api/generate-qrcode', methods=['POST'])
 def generate_qrcode_api():
     logger.info("Received request for QR code generation.")
-    # Accept both JSON and form-data (for file upload)
+    
     if request.content_type and request.content_type.startswith('multipart/form-data'):
         url = request.form.get('url')
         logo_file = request.files.get('logo')
