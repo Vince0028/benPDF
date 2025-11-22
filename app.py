@@ -804,7 +804,7 @@ def resize_image_api():
             output_format = 'WEBP'
             mimetype = 'image/webp'
 
-        # Convert to RGB if saving as JPEG, as JPEG does not support alpha channel
+        
         if output_format == 'JPEG' and resized_img.mode == 'RGBA':
             resized_img = resized_img.convert('RGB')
         
