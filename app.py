@@ -789,7 +789,7 @@ def resize_image_api():
             if LANCZOS_FILTER is None:
                 raise ImportError('No LANCZOS filter found in PIL.Image. Please update your Pillow library.')
         # Resize the image
-        resized_img = img.resize((target_width, target_height), LANCZOS_FILTER) # LANCZOS for high quality downsampling
+        resized_img = img.resize((target_width, target_height), LANCZOS_FILTER) 
         
         # Preserve original format if possible, otherwise default to PNG
         output_format = 'PNG'
