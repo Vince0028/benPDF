@@ -780,7 +780,7 @@ def resize_image_api():
         img = Image.open(file.stream)
         logger.info(f"Image '{filename}' opened for resizing.")
 
-        # Set up a compatible LANCZOS filter for Pillow >=9.1.0 and fallback for older versions
+        
         try:
             from PIL.Image import Resampling
             LANCZOS_FILTER = Resampling.LANCZOS
