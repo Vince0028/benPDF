@@ -31,7 +31,7 @@ export const BaseConverter: React.FC = () => {
     <div className="max-w-4xl mx-auto pt-4">
       <div className="mb-8 border-l-4 border-emerald-500 pl-6 py-2">
         <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">Base Converter</h2>
-        <p className="text-slate-400 font-mono text-sm">// BIN / OCT / DEC / HEX OPERATIONS</p>
+        <p className="text-slate-400 font-mono text-sm">BIN / OCT / DEC / HEX OPERATIONS</p>
       </div>
 
       <div className="bg-slate-900 border border-white/10 p-6 md:p-10 relative">
@@ -175,7 +175,7 @@ export const CalculusTool: React.FC = () => {
         <div className="max-w-4xl mx-auto pt-4">
             <div className="mb-8 border-l-4 border-orange-500 pl-6 py-2">
                 <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">Calculus Engine</h2>
-                <p className="text-slate-400 font-mono text-sm">// SYMBOLIC COMPUTATION MODULE</p>
+                <p className="text-slate-400 font-mono text-sm">SYMBOLIC COMPUTATION MODULE</p>
             </div>
 
             <div className="bg-slate-900 border border-white/10 p-6 md:p-10 relative">

@@ -47,7 +47,7 @@ const QrGenerator: React.FC = () => {
     <div className="max-w-5xl mx-auto pt-4">
       <div className="mb-8 border-l-4 border-slate-400 pl-6 py-2">
         <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">QR Code Matrix</h2>
-        <p className="text-slate-400 font-mono text-sm">// DATA ENCODING MODULE</p>
+        <p className="text-slate-400 font-mono text-sm">DATA ENCODING MODULE</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
