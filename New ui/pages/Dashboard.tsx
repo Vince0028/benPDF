@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
             Dashboard
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl font-mono">
-            // Select a module to begin operation.
+            Explore available conversion and utility tools.
             </p>
         </div>
       </header>

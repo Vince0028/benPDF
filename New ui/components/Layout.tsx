@@ -31,7 +31,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="p-2 bg-indigo-600 text-white">
             <FileText size={20} />
           </div>
-          BENPDF_V1
+          BENPDF
         </h1>
       </div>
       <nav className="flex-1 overflow-y-auto py-0 custom-scrollbar">

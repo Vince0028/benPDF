@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file, flash, redirect, url_for, jsonify, after_this_request
+from flask import Flask, request, render_template, send_file, send_from_directory, flash, redirect, url_for, jsonify, after_this_request
 from PIL import Image
 import os
 import io
@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static', template_folder='templates')
+
+# Path to built frontend (Vite) assets. The folder name contains a space so we build it programmatically.
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), 'New ui', 'dist')
 
 # Configuration for upload and converted folders
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -305,7 +308,19 @@ def convert_docx_to_pdf(input_path, output_path):
 
 @app.route('/')
 def index():
+    """Serve the React (Vite) built index.html if available; otherwise fall back to legacy template."""
+    dist_index = os.path.join(FRONTEND_DIST, 'index.html')
+    if os.path.exists(dist_index):
+        return send_file(dist_index)
     return render_template('index.html')
+
+@app.route('/assets/<path:filename>')
+def frontend_assets(filename):
+    """Serve built frontend static asset files (JS/CSS/images) when the React build is present."""
+    assets_dir = os.path.join(FRONTEND_DIST, 'assets')
+    if os.path.isdir(assets_dir):
+        return send_from_directory(assets_dir, filename)
+    return jsonify({'error': 'Frontend assets not built yet. Run npm install && npm run build inside "New ui" folder.'}), 404
 
 @app.route('/api/convert-image', methods=['POST'])
 def convert_image_api():

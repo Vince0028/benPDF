@@ -165,10 +165,10 @@ const QrGenerator: React.FC = () => {
                     <h3 className="font-bold font-mono uppercase text-sm">System_Notes</h3>
                 </div>
                 <ul className="space-y-4 text-xs font-mono text-slate-400 leading-relaxed">
-                    <li>> High contrast recommended for optimal scan rate.</li>
-                    <li>> Logo obstruction >30% may cause data redundancy failure.</li>
-                    <li>> Verify matrix integrity via mobile scanning device.</li>
-                    <li>> 'Square' style provides maximum device compatibility.</li>
+                  <li>&gt; High contrast recommended for optimal scan rate.</li>
+                  <li>&gt; Logo obstruction &gt;30% may cause data redundancy failure.</li>
+                  <li>&gt; Verify matrix integrity via mobile scanning device.</li>
+                  <li>&gt; 'Square' style provides maximum device compatibility.</li>
                 </ul>
             </div>
         </div>

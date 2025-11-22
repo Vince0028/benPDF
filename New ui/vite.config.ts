@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          // Forward all frontend /api requests to Flask backend (port 5000) during development
+          '/api': 'http://localhost:5000',
+          '/healthz': 'http://localhost:5000'
+        }
       },
       plugins: [react()],
       define: {
