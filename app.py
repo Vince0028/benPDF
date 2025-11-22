@@ -788,7 +788,7 @@ def resize_image_api():
             LANCZOS_FILTER = getattr(Image, 'LANCZOS', None)
             if LANCZOS_FILTER is None:
                 raise ImportError('No LANCZOS filter found in PIL.Image. Please update your Pillow library.')
-        # Resize the image
+       
         resized_img = img.resize((target_width, target_height), LANCZOS_FILTER) 
         
         
