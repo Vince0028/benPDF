@@ -755,7 +755,7 @@ def resize_image_api():
     
     logger.info(f"Image file uploaded for resizing: {filename}, Target dimensions: {target_width_str}x{target_height_str}")
 
-    if not allowed_file(filename, ALLOWED_IMAGE_EXTENSIONS): # Use same allowed extensions as general image converter
+    if not allowed_file(filename, ALLOWED_IMAGE_EXTENSIONS): 
         logger.warning(f"Invalid image file extension for resizing: {filename}")
         return jsonify({'error': 'Invalid image file type for resizing. Allowed: PNG, JPG, JPEG, GIF, WEBP'}), 400
     
