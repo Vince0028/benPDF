@@ -791,7 +791,7 @@ def resize_image_api():
         # Resize the image
         resized_img = img.resize((target_width, target_height), LANCZOS_FILTER) 
         
-        # Preserve original format if possible, otherwise default to PNG
+        
         output_format = 'PNG'
         mimetype = 'image/png'
         if original_ext in ['.jpg', '.jpeg']:
