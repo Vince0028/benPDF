@@ -249,12 +249,10 @@ async function resizeImage() {
         hideLoading();
     }
 }
-
 async function removeBackground() {
     const bgRemoveFileInput = document.getElementById('bgRemoveFileInput');
     const bgRemoveUrlInput = document.getElementById('bgRemoveUrlInput');
     const formData = new FormData();
-    
     if (bgRemoveFileInput.files.length > 0) {
         formData.append('file', bgRemoveFileInput.files[0]);
     } else if (bgRemoveUrlInput.value.trim() !== '') {
@@ -263,14 +261,12 @@ async function removeBackground() {
         showMessageBox('Please upload an image file or provide an image URL.');
         return;
     }
-    
     showLoading();
     try {
         const response = await fetch('/api/remove-background', {
             method: 'POST',
             body: formData,
         });
-        
         if (response.ok) {
             const blob = await response.blob();
             const disposition = response.headers.get('Content-Disposition');
@@ -282,7 +278,6 @@ async function removeBackground() {
                     filename = matches[1].replace(/['"]/g, '');
                 }
             }
-            
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -294,7 +289,6 @@ async function removeBackground() {
             showMessageBox('Background removed successfully! Download started.');
         } else {
             if (response.status === 503) {
-                // Feature disabled on the server
                 showMessageBox('Background removal is not available on this deployment.');
                 return;
             }
@@ -308,7 +302,6 @@ async function removeBackground() {
         hideLoading();
     }
 }
-
 async function generateQRCode() {
     const qrcodeUrlInput = document.getElementById('qrcodeUrlInput');
     const qrcodeLogoInput = document.getElementById('qrcodeLogoInput');
@@ -489,8 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', debounce(setUniformSectionHeight, 150));
     showSection('imageConverterSection');
     populateUnitOptions();
-    bindCalcToolbar(); // Bind calculus toolbar buttons
-    // Feature detection: check if background removal is enabled on server
+    bindCalcToolbar(); 
     fetch('/healthz').then(r => r.json()).then(info => {
         try {
             if (!info.rembg) {
@@ -600,8 +592,6 @@ function renderBaseSolutionHTML(solutionText) {
     html += '</ol>';
     return html;
 }
-
-// --- Calculus (Derivatives & Integrals) ---
 function insertAtCursor(textarea, token, cursorOffsetFromEnd=0) {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -610,11 +600,10 @@ function insertAtCursor(textarea, token, cursorOffsetFromEnd=0) {
     const after = original.substring(end);
     textarea.value = before + token + after;
     let newPos = before.length + token.length + cursorOffsetFromEnd;
-    if (newPos < 0) newPos = before.length + token.length; // fallback
+    if (newPos < 0) newPos = before.length + token.length; 
     textarea.focus();
     textarea.setSelectionRange(newPos, newPos);
 }
-
 function bindCalcToolbar() {
     const bar = document.getElementById('calcSymbolBar');
     if (!bar) return;
@@ -628,14 +617,12 @@ function bindCalcToolbar() {
         });
     });
 }
-
 function copyExpression() {
     const textarea = document.getElementById('calculusExpressionInput');
     navigator.clipboard.writeText(textarea.value).then(() => {
         showMessageBox('Expression copied to clipboard');
     }).catch(() => showMessageBox('Failed to copy expression'));
 }
-
 function copyLatexResult() {
     const latexEl = document.getElementById('calculusLatex');
     const raw = latexEl.textContent.replace(/^\s*LaTeX:\s*/, '').trim();
@@ -659,7 +646,6 @@ function toggleCalculusFields() {
         boundsRow.style.display = '';
     }
 }
-
 async function computeCalculus() {
     const expr = document.getElementById('calculusExpressionInput').value.trim();
     const variable = document.getElementById('calculusVariableInput').value.trim() || 'x';
@@ -686,7 +672,7 @@ async function computeCalculus() {
     };
     if (operation === 'derivative') {
         payload.order = parseInt(orderVal || '1', 10);
-    } else { // integral
+    } else { 
         if (lower && upper) {
             payload.lower = lower;
             payload.upper = upper;
@@ -705,9 +691,7 @@ async function computeCalculus() {
             return;
         }
         resultEl.textContent = data.result;
-        // Render LaTeX result
         latexEl.innerHTML = data.result_latex ? `$${data.result_latex}$` : '';
-        // Build steps list with LaTeX if available
         stepsEl.innerHTML = '';
         const plainSteps = data.steps || [];
         const latexSteps = data.steps_latex || [];

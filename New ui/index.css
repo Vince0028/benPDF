@@ -1,5 +1,3 @@
-/* Placeholder stylesheet to satisfy build reference.
-   Tailwind is loaded via CDN in index.html; add overrides here if needed. */
 :root {
   --app-accent: #0f172a;
 }

@@ -8,17 +8,16 @@ import zipfile
 import glob
 import re
 import tempfile
-import sys # Import sys to check platform
-import requests # Import requests for URL fetching
+import sys 
+import requests 
 import subprocess
-import qrcode # Import qrcode for QR code generation
+import qrcode 
 from decimal import Decimal, getcontext
 from sympy import symbols, diff, integrate, latex, Symbol, sin, cos, tan, asin, acos, atan, log, exp, sqrt, pi, E, Abs
 from sympy.core.add import Add
 from sympy.core.mul import Mul
 from sympy.parsing.sympy_parser import standard_transformations, implicit_multiplication_application, convert_xor, parse_expr
 
-# Optional import for background removal
 try:
     from rembg import remove as rembg_remove
     REMBG_AVAILABLE = True
@@ -26,29 +25,23 @@ except ImportError:
     REMBG_AVAILABLE = False
     logging.warning("rembg not available. Background removal feature will be disabled.")
 
-# Conditional import for pywin32, only on Windows
 if sys.platform == "win32":
     try:
         import pythoncom
     except ImportError:
         logging.warning("pythoncom not found. docx2pdf conversion might fail on Windows if not installed.")
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Flask app
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# Path to built frontend (Vite) assets. The folder name contains a space so we build it programmatically.
 FRONTEND_DIST = os.path.join(os.path.dirname(__file__), 'New ui', 'dist')
 
-# Configuration for upload and converted folders
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['CONVERTED_FOLDER'] = 'converted'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 # 100 MB limit for uploads (Adjusted from previous suggestion)
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 
-# Prevent stale HTML in some hosting/CDN layers
 @app.after_request
 def add_no_cache_headers(response):
     try:
@@ -60,17 +53,13 @@ def add_no_cache_headers(response):
         pass
     return response
 
-# Ensure upload and converted directories exist (for local testing mostly)
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 if not os.path.exists(app.config['CONVERTED_FOLDER']):
     os.makedirs(app.config['CONVERTED_FOLDER'])
 
-# Allowed image extensions for image conversion (outputs to PNG)
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-# Allowed document extensions for document conversion
 ALLOWED_DOCUMENT_EXTENSIONS = {'pdf', 'doc', 'docx'}
-# Allowed extensions for ICO conversion (source images)
 ALLOWED_ICO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
 
@@ -85,11 +74,9 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
     source_base_name = {2: "Binary", 8: "Octal", 10: "Decimal", 16: "Hexadecimal"}[source_base]
     target_base_name = {2: "Binary", 8: "Octal", 10: "Decimal", 16: "Hexadecimal"}[target_base_int]
 
-    # Define a threshold for detailed step generation
-    MAX_DETAIL_DECIMAL_VALUE = 100000 # Numbers above this will get high-level steps only
-    MAX_DIVISION_STEPS = 50 # Max individual division steps to show for numbers below threshold
+    MAX_DETAIL_DECIMAL_VALUE = 100000 
+    MAX_DIVISION_STEPS = 50 
 
-    # Step 1: Convert source to Decimal (if not already decimal)
     if source_base != 10:
         steps.append(f"Step 1: Convert {source_base_name} {input_value} to Decimal.")
         if decimal_value <= MAX_DETAIL_DECIMAL_VALUE:
@@ -102,7 +89,7 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
                         expanded_form.append(f"({str(digit_val)}×{power_base}^{i})")
                     else:
                         expanded_form.append(f"({digit}×{power_base}^{i})")
-                decimal_calc_str = " + ".join(expanded_form[::-1]) # Reverse to show highest power first
+                decimal_calc_str = " + ".join(expanded_form[::-1]) 
                 steps.append(f"   Method: Multiply each digit by {power_base} raised to its position (right to left, starting from 0), then sum the results.")
                 steps.append(f"   {input_value} = {decimal_calc_str} = {decimal_value}")
         else:
@@ -111,7 +98,6 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
     else:
         steps.append(f"Step 1: Source is already Decimal: {input_value}")
         
-    # Step 2: Convert Decimal to Target Base (if not already target base)
     if target_base_int != 10:
         steps.append(f"\nStep 2: Convert Decimal {decimal_value} to {target_base_name}.")
         
@@ -135,33 +121,31 @@ def generate_conversion_steps(input_value, source_base, target_base_int, decimal
                 current_num //= target_base_int
                 step_count += 1
             
-            if decimal_value == 0: # Handle input 0 explicitly
+            if decimal_value == 0: 
                  steps.append(f"   0 ÷ {target_base_int} = 0 R0")
                  remainders.append("0")
 
             steps.extend(division_steps_detail)
-            if current_num > 0: # If steps were truncated
+            if current_num > 0: 
                 steps.append(f"   ... (remaining steps omitted due to length)")
-            final_result = "".join(remainders[::-1]) # Reverse remainders to get final result
+            final_result = "".join(remainders[::-1]) 
             steps.append(f"   Collect remainders in reverse: {final_result}")
         else:
             steps.append(f"   Due to the large size of the number, detailed division steps are omitted.")
-            # Recompute converted_value here to be safe and consistent with the actual conversion later
             if target_base_int == 2:
-                final_converted_value = bin(decimal_value)[2:] # Remove "0b" prefix
+                final_converted_value = bin(decimal_value)[2:] 
             elif target_base_int == 8:
-                final_converted_value = oct(decimal_value)[2:] # Remove "0o" prefix
+                final_converted_value = oct(decimal_value)[2:] 
             elif target_base_int == 10:
                 final_converted_value = str(decimal_value)
             elif target_base_int == 16:
-                final_converted_value = hex(decimal_value)[2:].upper() # Remove "0x" prefix and make uppercase
+                final_converted_value = hex(decimal_value)[2:].upper() 
             steps.append(f"   Final Result: {final_converted_value}")
     else:
         steps.append(f"\nStep 2: Target is already Decimal: {decimal_value}")
 
     return "\n".join(steps)
 
-# --- Base conversion helpers that support fractional values ---
 def _digit_to_value(ch: str) -> int:
     if ch.isdigit():
         return int(ch)
@@ -180,14 +164,12 @@ def parse_base_to_decimal(value_str: str, base: int) -> Decimal:
         int_part_s, frac_part_s = s.split('.', 1)
     else:
         int_part_s, frac_part_s = s, ''
-    # Integer part
     int_val = Decimal(0)
     for ch in int_part_s:
         if ch == '':
             continue
         d = _digit_to_value(ch)
         int_val = int_val * base + d
-    # Fractional part
     frac_val = Decimal(0)
     power = Decimal(base)
     for ch in frac_part_s:
@@ -199,10 +181,8 @@ def parse_base_to_decimal(value_str: str, base: int) -> Decimal:
 def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
     """Format Decimal value into base-N string with up to 'precision' fractional digits."""
     getcontext().prec = 50
-    # Separate integer and fractional parts
-    int_part = int(val)  # floor for positive numbers
+    int_part = int(val)  
     frac_part = val - Decimal(int_part)
-    # Integer part conversion
     if int_part == 0:
         int_digits = ['0']
     else:
@@ -212,7 +192,6 @@ def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
             n, rem = divmod(n, base)
             int_digits.append(_value_to_digit(int(rem)))
         int_digits.reverse()
-    # Fractional part conversion
     if precision > 0 and frac_part != 0:
         frac_digits = []
         f = frac_part
@@ -223,7 +202,6 @@ def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
             f -= digit
             if f == 0:
                 break
-        # Trim trailing zeros
         while frac_digits and frac_digits[-1] == '0':
             frac_digits.pop()
         if frac_digits:
@@ -233,10 +211,8 @@ def format_decimal_to_base(val: Decimal, base: int, precision: int = 12) -> str:
 def convert_docx_to_pdf(input_path, output_path):
     """Convert DOCX to PDF using multiple fallback methods"""
     
-    # Import os at function level so it's available for all methods
     import os
     
-    # Method 1: Try using comtypes (Windows)
     if sys.platform == "win32":
         try:
             import comtypes.client
@@ -245,11 +221,10 @@ def convert_docx_to_pdf(input_path, output_path):
             try:
                 word = comtypes.client.CreateObject('Word.Application')
                 word.Visible = False
-                # Convert paths to absolute paths
                 abs_input = os.path.abspath(input_path)
                 abs_output = os.path.abspath(output_path)
                 doc = word.Documents.Open(abs_input)
-                doc.SaveAs(abs_output, FileFormat=17)  # 17 = wdFormatPDF
+                doc.SaveAs(abs_output, FileFormat=17)  
                 doc.Close()
                 word.Quit()
                 logger.info("DOCX to PDF conversion successful using comtypes/Word")
@@ -261,9 +236,7 @@ def convert_docx_to_pdf(input_path, output_path):
         except Exception as e:
             logger.warning(f"comtypes/Word conversion failed: {e}, trying next method...")
     
-    # Method 2: Try LibreOffice
     try:
-        # Try different LibreOffice executable names
         libreoffice_commands = ['libreoffice', 'soffice', 'C:\\Program Files\\LibreOffice\\program\\soffice.exe']
         
         success = False
@@ -277,7 +250,6 @@ def convert_docx_to_pdf(input_path, output_path):
                     input_path
                 ], check=True, capture_output=True)
                 
-                # LibreOffice creates the PDF with the same name as input
                 generated_pdf = os.path.join(
                     os.path.dirname(output_path),
                     os.path.splitext(os.path.basename(input_path))[0] + '.pdf'
@@ -297,7 +269,6 @@ def convert_docx_to_pdf(input_path, output_path):
     except Exception as e:
         logger.warning(f"LibreOffice conversion failed: {e}")
     
-    # If all methods fail, raise an error with helpful message
     error_msg = (
         "DOCX to PDF conversion failed. Please install one of the following:\n"
         "1. Microsoft Word (Windows)\n"
@@ -345,17 +316,15 @@ def convert_image_api():
         return jsonify({'error': 'No image file uploaded or URL provided.'}), 400
 
     output_buffer = io.BytesIO()
-    converted_filename = "converted_image.png" # Output format is fixed to PNG here
+    converted_filename = "converted_image.png" 
 
     try:
         img = None
         if file:
-            # Read file content for analysis
             file.stream.seek(0)
             file_content = file.stream.read()
             logger.info(f"Read {len(file_content)} bytes from uploaded file")
             
-            # Detect file format by signature
             detected_format = None
             if len(file_content) >= 12:
                 if file_content[:2] == b'\xff\xd8':
@@ -371,22 +340,18 @@ def convert_image_api():
                         detected_format = 'HEIF'
                     logger.info(f"Detected HEIF/AVIF format file")
             
-            # Register HEIF support
             try:
                 from pillow_heif import register_heif_opener
                 register_heif_opener()
             except ImportError:
                 pass
             
-            # Try multiple methods to open the image
             try:
-                # Method 1: Direct BytesIO
                 img = Image.open(io.BytesIO(file_content))
                 logger.info(f"Image opened successfully (Method 1), format: {img.format}")
             except Exception as e1:
                 logger.warning(f"Method 1 failed: {e1}")
                 
-                # Method 1b: If HEIF/AVIF, try pillow_heif directly
                 img = None
                 if detected_format in ['AVIF', 'HEIF']:
                     try:
@@ -402,7 +367,6 @@ def convert_image_api():
                     except Exception as e1b:
                         logger.warning(f"Method 1b (pillow_heif direct) failed: {e1b}")
                 
-                # Method 2: OpenCV
                 if not img:
                     try:
                         import cv2
@@ -421,7 +385,6 @@ def convert_image_api():
                     except Exception as e2:
                         logger.warning(f"Method 2 failed: {e2}")
                         
-                        # Method 3: Temp file with correct extension
                         if detected_format in ['AVIF', 'HEIF']:
                             file_ext = '.avif' if detected_format == 'AVIF' else '.heic'
                             with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
@@ -446,7 +409,6 @@ def convert_image_api():
             img = Image.open(io.BytesIO(response.content))
             logger.info("Image fetched from URL successfully.")
 
-        # Ensure image is in RGB or RGBA mode for consistent saving
         if img.mode not in ['RGB', 'RGBA']:
             img = img.convert('RGB')
         
@@ -494,9 +456,7 @@ def convert_document_api():
     output_filepath = None
 
     try:
-        # Create a temporary file for the input
         input_file_ext = os.path.splitext(filename)[1]
-        # Use tempfile.NamedTemporaryFile to manage temporary file paths
         with tempfile.NamedTemporaryFile(delete=False, suffix=input_file_ext) as input_temp_file:
             file.save(input_temp_file.name)
             input_filepath = input_temp_file.name
@@ -538,7 +498,6 @@ def convert_document_api():
             logger.warning(f"Unsupported document file type for conversion: {filename}")
             return jsonify({'error': 'Unsupported document file type.'}), 400
 
-        # Register a cleanup function to run after the response is sent
         @after_this_request
         def remove_temp_files(response):
             try:
@@ -563,7 +522,6 @@ def convert_document_api():
 
     except Exception as e:
         logger.exception("An error occurred during document conversion.")
-        # Attempt to clean up files immediately if an error occurs before response is sent
         if input_filepath and os.path.exists(input_filepath):
             try:
                 os.remove(input_filepath)
@@ -594,7 +552,6 @@ def convert_base_api():
         logger.warning("Missing input for base conversion.")
         return jsonify({'error': 'Missing input value, source base, or target base.'}), 400
 
-    # Map string bases to integer bases and their display names
     base_map = {
         'binary': {'int': 2, 'name': 'Binary'},
         'decimal': {'int': 10, 'name': 'Decimal'},
@@ -612,7 +569,6 @@ def convert_base_api():
     source_base = source_info['int']
     target_base = target_info['int']
     
-    # Allow multiple inputs separated by commas, spaces, or newlines
     tokens = []
     for part in re.split(r'[\s,]+', input_value.strip()):
         if part:
@@ -625,7 +581,6 @@ def convert_base_api():
     try:
         for token in tokens:
             token_u = token.upper()
-            # Validation regex: allow optional single decimal point for fractional part
             if source_base == 2:
                 if not re.fullmatch(r'[01]+(\.[01]+)?', token_u):
                     return jsonify({'error': f"Invalid binary input '{token}'. Use only 0/1 with optional fractional part."}), 400
@@ -639,18 +594,14 @@ def convert_base_api():
                 if not re.fullmatch(r'[0-9A-F]+(\.[0-9A-F]+)?', token_u):
                     return jsonify({'error': f"Invalid hexadecimal input '{token}'. Use 0-9/A-F with optional fractional part."}), 400
 
-            # Convert token to Decimal (supports fraction)
             dec_val = parse_base_to_decimal(token_u, source_base)
             logger.info(f"Converted '{token_u}' from base {source_base} to decimal: {dec_val}")
 
-            # Format into target base (support fractional)
             converted_token = format_decimal_to_base(dec_val, target_base)
             results.append(converted_token)
-            # For solution, show steps for integer part. Fractional explanation can be added later.
             int_part = str(int(dec_val))
             solutions.append(generate_conversion_steps(token_u, source_base, target_base, int(int_part)))
 
-        # For backward compatibility, when a single value is provided, return result as string
         if len(results) == 1:
             return jsonify({'input': tokens[0], 'result': results[0], 'results': results, 'solution': solutions[0], 'solutions': solutions}), 200
         else:
@@ -683,20 +634,16 @@ def convert_to_ico_api():
         img = Image.open(file.stream)
         logger.info(f"Image '{filename}' opened for ICO conversion.")
 
-        # Ensure image has an alpha channel for better ICO quality
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
 
-        # Create multiple sizes for the ICO file
         icon_sizes = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
         
-        # Filter sizes to ensure they are not larger than original image
         available_sizes = []
         for size in icon_sizes:
             if size[0] <= img.width and size[1] <= img.height:
                 available_sizes.append(size)
         
-        # If original image is smaller than smallest icon size, use original size
         if not available_sizes:
             available_sizes = [(img.width, img.height)]
 
@@ -706,7 +653,6 @@ def convert_to_ico_api():
         
         logger.info(f"Image converted to ICO: {temp_ico_filepath}")
 
-        # Register a cleanup function
         @after_this_request
         def remove_temp_ico_file(response):
             try:
@@ -858,7 +804,6 @@ def generate_qrcode_api():
     url = url.strip()
 
     try:
-        # Map error correction level
         error_correction_map = {
             'L': qrcode.constants.ERROR_CORRECT_L,
             'M': qrcode.constants.ERROR_CORRECT_M,
@@ -867,7 +812,6 @@ def generate_qrcode_api():
         }
         error_correction = error_correction_map.get(error_correction_level, qrcode.constants.ERROR_CORRECT_H)
         
-        # Create QR code instance
         qr = qrcode.QRCode(
             version=1,
             error_correction=error_correction,
@@ -877,7 +821,6 @@ def generate_qrcode_api():
         qr.add_data(url)
         qr.make(fit=True)
 
-        # Use qrcode.image.styledpil.StyledPilImage for styled modules if requested
         qr_img = None
         if style == 'rounded':
             try:
@@ -898,7 +841,6 @@ def generate_qrcode_api():
         else:
             qr_img = qr.make_image(fill_color=fg_color, back_color=bg_color).convert('RGBA')
 
-        # If logo is provided, embed it in the center
         qr_width, qr_height = qr_img.size
         logo_size = int(min(qr_width, qr_height) * (logo_size_percent / 100.0))
         from PIL import ImageDraw
@@ -908,12 +850,10 @@ def generate_qrcode_api():
             try:
                 logger.info(f"Logo file received: {logo_file.filename}, content_type: {logo_file.content_type}")
                 
-                # Read file content
                 logo_file.stream.seek(0)
                 file_content = logo_file.stream.read()
                 logger.info(f"Read {len(file_content)} bytes from upload")
                 
-                # Diagnostic: Check file signature (magic bytes)
                 if len(file_content) >= 8:
                     magic_bytes = file_content[:8]
                     logger.info(f"File signature (first 8 bytes): {magic_bytes.hex()}")
@@ -954,12 +894,10 @@ def generate_qrcode_api():
                 except ImportError:
                     logger.warning("pillow-heif not available, HEIF/AVIF formats won't be supported")
                 
-                # Method 1: Try reading directly from BytesIO
                 try:
                     logo_img = Image.open(io.BytesIO(file_content))
-                    # For JPEG files, verify and load the data
                     if hasattr(logo_img, 'format') and logo_img.format == 'JPEG':
-                        logo_img.load()  # Force load to verify
+                        logo_img.load()  
                     logger.info(f"Method 1 SUCCESS - Logo format: {logo_img.format}, mode: {logo_img.mode}, size: {logo_img.size}")
                 except Exception as e1:
                     logger.warning(f"Method 1 (BytesIO) failed: {e1}")
@@ -986,18 +924,15 @@ def generate_qrcode_api():
                             import cv2
                             import numpy as np
                         
-                            # Decode image with opencv
                             nparr = np.frombuffer(file_content, np.uint8)
                             img_cv = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
                             
                             if img_cv is not None:
-                                # Convert BGR to RGB (opencv uses BGR)
                                 if len(img_cv.shape) == 3 and img_cv.shape[2] == 3:
                                     img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
                                 elif len(img_cv.shape) == 3 and img_cv.shape[2] == 4:
                                     img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGRA2RGBA)
                                 
-                                # Convert to PIL Image
                                 logo_img = Image.fromarray(img_cv)
                                 logger.info(f"Method 2 SUCCESS - OpenCV conversion succeeded, size: {logo_img.size}")
                             else:
@@ -1005,9 +940,7 @@ def generate_qrcode_api():
                         except Exception as e2:
                             logger.warning(f"Method 2 (OpenCV) failed: {e2}")
                         
-                        # Method 3: Try saving to temp file with correct extension based on signature
                         try:
-                            # Use detected format to determine correct extension
                             if detected_format == 'AVIF':
                                 file_ext = '.avif'
                             elif detected_format == 'HEIF':
@@ -1015,7 +948,6 @@ def generate_qrcode_api():
                             elif detected_format:
                                 file_ext = f'.{detected_format.lower()}'
                             else:
-                                # Fallback to original extension
                                 file_ext = os.path.splitext(logo_file.filename)[1] or '.jpg'
                             
                             logger.info(f"Trying temp file method with extension: {file_ext}")
@@ -1025,14 +957,12 @@ def generate_qrcode_api():
                                 temp_path = temp_file.name
                             
                             try:
-                                # Try to open with PIL
                                 logo_img = Image.open(temp_path)
-                                logo_img.load()  # Force load
+                                logo_img.load()  
                                 logger.info(f"Method 3 SUCCESS - Temp file method succeeded, format: {logo_img.format}")
                             except Exception as e3_inner:
                                 logger.warning(f"Method 3a (temp file PIL) failed: {e3_inner}")
                                 
-                                # Try with opencv as last resort
                                 img_cv = cv2.imread(temp_path, cv2.IMREAD_UNCHANGED)
                                 if img_cv is not None:
                                     if len(img_cv.shape) == 3 and img_cv.shape[2] == 3:
@@ -1044,17 +974,14 @@ def generate_qrcode_api():
                                 else:
                                     raise Exception("OpenCV could not read temp file")
                             finally:
-                                # Clean up temp file
                                 if os.path.exists(temp_path):
                                     os.remove(temp_path)
                         except Exception as e3:
                             logger.warning(f"Method 3 (temp file) failed: {e3}")
                             
-                            # All methods failed - log detailed error and skip logo
                             logger.error(f"All image decoding methods failed for {logo_file.filename}. The file may be corrupted or in an unsupported format. QR code will be generated without logo.")
                             logo_img = None
                 
-                # If we successfully loaded the image, embed it in the QR code
                 if logo_img:
                     logo_img = logo_img.convert('RGBA')
                     logo_img = logo_img.resize((logo_size, logo_size), Image.LANCZOS)
@@ -1067,7 +994,6 @@ def generate_qrcode_api():
             except Exception as e:
                 import traceback
                 logger.error(f"Failed to embed logo: {e}\n{traceback.format_exc()}")
-                # Only fallback to red circle if logo processing fails
                 overlay = Image.new('RGBA', (logo_size, logo_size), (255, 0, 0, 0))
                 draw = ImageDraw.Draw(overlay)
                 draw.ellipse((0, 0, logo_size, logo_size), fill=(255, 0, 0, 180))
@@ -1075,7 +1001,6 @@ def generate_qrcode_api():
                 qr_img.paste(overlay, pos, mask=overlay)
         else:
             logger.info("No logo file provided or filename is empty")
-        # If no logo_file, do not overlay anything (no red spot)
 
         output_buffer = io.BytesIO()
         qr_img.save(output_buffer, format='PNG')
@@ -1101,7 +1026,7 @@ def convert_unit_api():
     value = data.get('value')
     from_unit = data.get('fromUnit')
     to_unit = data.get('toUnit')
-    unit_type = data.get('unitType') # e.g., 'temperature', 'length', 'mass'
+    unit_type = data.get('unitType') 
 
     if None in [value, from_unit, to_unit, unit_type]:
         return jsonify({'error': 'Missing value, source unit, target unit, or unit type.'}), 400
@@ -1114,7 +1039,6 @@ def convert_unit_api():
     converted_value = None
 
     if unit_type == 'temperature':
-        # Convert all to Celsius first, then to target
         if from_unit == 'celsius':
             celsius = value
         elif from_unit == 'fahrenheit':
@@ -1134,7 +1058,6 @@ def convert_unit_api():
             return jsonify({'error': 'Invalid target temperature unit.'}), 400
     
     elif unit_type == 'length':
-        # Convert all to meters first, then to target
         if from_unit == 'meters':
             meters = value
         elif from_unit == 'kilometers':
@@ -1162,7 +1085,6 @@ def convert_unit_api():
             return jsonify({'error': 'Invalid target length unit.'}), 400
 
     elif unit_type == 'mass':
-        # Convert all to kilograms first, then to target
         if from_unit == 'kilograms':
             kilograms = value
         elif from_unit == 'grams':
@@ -1188,7 +1110,7 @@ def convert_unit_api():
         return jsonify({'error': 'Invalid unit type. Must be temperature, length, or mass.'}), 400
 
     if converted_value is not None:
-        return jsonify({'result': round(converted_value, 4)}), 200 # Round for display
+        return jsonify({'result': round(converted_value, 4)}), 200 
     else:
         return jsonify({'error': 'Conversion not possible between specified units.'}), 400
 
@@ -1200,11 +1122,11 @@ def calculus_api():
       {
         "expression": "sin(x)*x^2 + 3*x",
         "operation": "derivative" | "integral",
-        "variable": "x",            # optional, default x
-        "order": 2,                  # optional for higher-order derivative
-        "lower": "0",               # optional for definite integral
-        "upper": "pi",              # optional for definite integral
-        "simplify": true             # optional, default true
+        "variable": "x",            
+        "order": 2,                  
+        "lower": "0",               
+        "upper": "pi",              
+        "simplify": true             
       }
     Response includes plain result, LaTeX, and lightweight term-by-term steps.
     """
@@ -1227,11 +1149,9 @@ def calculus_api():
         return jsonify({'error': 'operation must be derivative or integral'}), 400
     if order < 1:
         return jsonify({'error': 'order must be >= 1'}), 400
-    # Basic variable name validation
     if not isinstance(var_name, str) or not var_name.isidentifier():
         return jsonify({'error': 'Invalid variable name.'}), 400
 
-    # Allowed symbols/functions environment
     allowed_symbols = {var_name: Symbol(var_name)}
     allowed_functions = {
         'sin': sin, 'cos': cos, 'tan': tan,
@@ -1265,13 +1185,11 @@ def calculus_api():
     if operation == 'derivative':
         from sympy import expand
         target_expr = expr
-        # Optional expansion step for readability
         expanded = expand(target_expr)
         if expanded != target_expr:
             steps.append(f"Expand: {target_expr} = {expanded}")
             steps_latex.append(f"{latex(target_expr)} = {latex(expanded)}")
             target_expr = expanded
-        # Build steps via term-by-term differentiation if sum
         if isinstance(target_expr, Add):
             steps.append("Linearity: d/d%s of sum = sum of d/d%s of each term" % (var_name, var_name))
             steps_latex.append(f"\n" + latex(target_expr))
@@ -1293,7 +1211,7 @@ def calculus_api():
                 result = result.simplify()
             except Exception:
                 pass
-    else:  # integral
+    else:  
         if lower is not None and upper is not None:
             is_definite = True
         from sympy import expand
@@ -1340,7 +1258,6 @@ def calculus_api():
             except Exception:
                 pass
 
-    # Prepare response
     result_str = str(result)
     try:
         result_latex = latex(result)
@@ -1368,7 +1285,6 @@ def calculus_api():
 def healthz():
     """Simple health check endpoint for Render/containers."""
     try:
-        # Minimal self-check: ensure template folder exists and upload dir is writable
         templates_ok = os.path.isdir(app.template_folder)
         uploads_ok = os.path.isdir(app.config['UPLOAD_FOLDER'])
         return jsonify({
@@ -1383,7 +1299,6 @@ def healthz():
 def remove_background_api():
     logger.info("Received request for background removal.")
     
-    # Check if rembg is available
     if not REMBG_AVAILABLE:
         return jsonify({'error': 'Background removal feature is not available. Please install rembg: pip install rembg'}), 503
     
@@ -1424,14 +1339,11 @@ def remove_background_api():
             input_data = response.content
             logger.info(f"Image fetched from URL, size: {len(input_data)} bytes")
 
-        # Remove background using rembg
         logger.info("Processing background removal...")
         output_data = rembg_remove(input_data)
         
-        # Convert to PIL Image to ensure proper format
         img = Image.open(io.BytesIO(output_data))
         
-        # Save as PNG (to preserve transparency)
         img.save(output_buffer, format='PNG')
         output_buffer.seek(0)
 
@@ -1457,7 +1369,6 @@ def remove_background_api():
 
 if __name__ == '__main__':
     import os
-    # Use environment variable for debug mode (default False for production)
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=debug_mode)

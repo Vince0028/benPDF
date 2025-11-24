@@ -32,20 +32,19 @@ from sympy.parsing.sympy_parser import (
     convert_xor,
 )
 
-# Allowed functions for safety (extend as needed)
 ALLOWED_FUNCS: Dict[str, Any] = {
     'sin': sin,
     'cos': cos,
     'tan': tan,
-    'log': log,  # natural log
+    'log': log,  
     'exp': exp,
     'sqrt': sqrt,
 }
 
 TRANSFORMS = standard_transformations + (implicit_multiplication_application,) + (convert_xor,)
 
-EXPONENT_VAR_PATTERN = re.compile(r"([a-zA-Z])([0-9]+)")  # x4 -> x**4
-COEFF_VAR_EXP_PATTERN = re.compile(r"([0-9]+)([a-zA-Z])([0-9]+)")  # 6x5 -> 6*x**5
+EXPONENT_VAR_PATTERN = re.compile(r"([a-zA-Z])([0-9]+)")  
+COEFF_VAR_EXP_PATTERN = re.compile(r"([0-9]+)([a-zA-Z])([0-9]+)")  
 FUNC_NAMES = list(ALLOWED_FUNCS.keys())
 PROTECT_MAP = {fn: f"__{fn.upper()}__" for fn in FUNC_NAMES}
 
@@ -76,21 +75,14 @@ def normalize_expression(raw: str) -> str:
     - Leave function names intact; rely on implicit_multiplication_application for things like 2*x*exp(2*x)
     """
     s = raw.strip()
-    # Variable exponent: x4 -> x**4 (only for single variable x)
     s = re.sub(r"\bx([0-9]+)\b", lambda m: f"x**{m.group(1)}", s)
-    # Coefficient variable exponent: 6x5 -> 6*x**5
     s = re.sub(r"\b([0-9]+)x([0-9]+)\b", lambda m: f"{m.group(1)}*x**{m.group(2)}", s)
-    # Coefficient with variable (no exponent): 9x -> 9*x (avoid if already handled)
     s = re.sub(r"\b([0-9]+)x\b", lambda m: f"{m.group(1)}*x", s)
-    # Insert * between x and function when merged: xcos(x) -> x*cos(x)
     for fn in FUNC_NAMES:
         s = re.sub(rf"x{fn}\(", f"x*{fn}(", s)
-    # Insert * between number or ) and function name: 2exp( -> 2*exp(
     for fn in FUNC_NAMES:
         s = re.sub(rf"([0-9)]){fn}\(", r"\1*" + fn + "(", s)
-    # Insert * between number or ) and x: 2x -> 2*x, )x -> )*x
     s = re.sub(r"([0-9)])x", r"\1*x", s)
-    # Collapse multiple spaces
     s = re.sub(r"\s+", " ", s)
     return s
 
@@ -124,7 +116,6 @@ def integral(expr_string: str, var_name: str = 'x', lower: Optional[str] = None,
     expr, normalized, var = safe_parse(expr_string, var_name)
     steps: List[CalcStep] = [CalcStep(plain=f"Normalized: {normalized}", latex=latex(expr))]
     if lower is not None and upper is not None:
-        # Definite integral
         parsed_lower, norm_lower, _ = safe_parse(lower, var_name)
         parsed_upper, norm_upper, _ = safe_parse(upper, var_name)
         integ = integrate(expr, (var, parsed_lower, parsed_upper))
@@ -146,20 +137,19 @@ def integral(expr_string: str, var_name: str = 'x', lower: Optional[str] = None,
 
 def _demo():
     tests = [
-        ("x*(xcos(x) + 2sin(x))", 1),      # implicit mult: x*cos(x) etc
-        ("9x**2 + 4", 1),                   # 9*x**2 + 4
-        ("2exp(2x)log(exp(1)) + 5", 1),     # chain of functions
-        ("x**3(4log(x) + 1)", 1),           # x**3*(4*log(x)+1)
-        ("2x + cos(x)(-2)", 1),             # 2*x + cos(x)*(-2)
-        ("x4", 2),                          # x**4 second derivative
-        ("6x5", 3),                         # 6*x**5 third derivative
-        ("6*x2 + 1/(2*sqrt(x))", 1),        # 6*x**2 + 1/(2*sqrt(x))
+        ("x*(xcos(x) + 2sin(x))", 1),      
+        ("9x**2 + 4", 1),                   
+        ("2exp(2x)log(exp(1)) + 5", 1),     
+        ("x**3(4log(x) + 1)", 1),           
+        ("2x + cos(x)(-2)", 1),             
+        ("x4", 2),                          
+        ("6x5", 3),                         
+        ("6*x2 + 1/(2*sqrt(x))", 1),        
     ]
     print("Derivative Tests:\n")
     for expr, order in tests:
         try:
             res = derivative(expr, order)
-            # Clean output: only LaTeX form of the final simplified derivative
             print(f"Input: {expr}\n Order: {order}\n Normalized: {res.expr_str}\n Result (LaTeX): {res.latex}\n Steps (LaTeX only):")
             for st in res.steps:
                 print("  -", st.latex)

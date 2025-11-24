@@ -4,7 +4,6 @@ import {
   FileText, Image as ImageIcon, Calculator, QrCode, 
   Scale, Binary, Scissors, ArrowRightLeft, ArrowRight
 } from 'lucide-react';
-
 const tools = [
   { 
     name: 'Doc Converter', 
@@ -79,7 +78,6 @@ const tools = [
     borderColor: 'hover:border-amber-500'
   },
 ];
-
 const Dashboard: React.FC = () => {
   return (
     <div className="animate-fade-in pb-10">
@@ -93,7 +91,6 @@ const Dashboard: React.FC = () => {
             </p>
         </div>
       </header>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map((tool) => (
           <Link 
@@ -107,13 +104,11 @@ const Dashboard: React.FC = () => {
               </div>
               <ArrowRight className="text-slate-600 group-hover:text-white transition-colors transform group-hover:translate-x-1" size={20} />
             </div>
-            
             <h3 className="text-xl font-bold text-white mb-2 font-mono uppercase">{tool.name}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
               {tool.desc}
             </p>
-            
-            {/* Corner accents for tech look */}
+            {}
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 group-hover:border-white/50 transition-colors"></div>
             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20 group-hover:border-white/50 transition-colors"></div>
           </Link>
@@ -122,5 +117,4 @@ const Dashboard: React.FC = () => {
     </div>
   );
 };
-
 export default Dashboard;

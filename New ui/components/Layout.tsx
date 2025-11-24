@@ -4,11 +4,9 @@ import {
   FileText, Image as ImageIcon, Calculator, QrCode, 
   Scale, FileJson, Menu, X, Binary, Scissors, ArrowRightLeft
 } from 'lucide-react';
-
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-
   const navItems = [
     { label: 'Dashboard', path: '/', icon: <FileJson size={18} />, category: 'main' },
     { label: 'Doc Converter', path: '/doc-convert', icon: <FileText size={18} />, category: 'files' },
@@ -21,9 +19,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { label: 'QR Generator', path: '/qr-code', icon: <QrCode size={18} />, category: 'utilities' },
     { label: 'Unit Converter', path: '/unit-convert', icon: <Scale size={18} />, category: 'utilities' },
   ];
-
   const isActive = (path: string) => location.pathname === path;
-
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-slate-300">
       <div className="p-6 border-b border-white/10 bg-slate-900/50">
@@ -55,26 +51,22 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </nav>
     </div>
   );
-
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden relative font-sans selection:bg-indigo-500/30">
-      {/* Tech Background */}
+      {}
       <div className="fixed inset-0 z-0 bg-grid pointer-events-none opacity-30"></div>
-      
-      {/* Subtle ambient glow */}
+      {}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[120px] animate-pulse"></div>
          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-900/10 rounded-full blur-[120px]"></div>
       </div>
-
-      {/* Desktop Sidebar */}
+      {}
       <div className="hidden md:flex md:w-72 z-20 border-r border-white/10 bg-slate-900/80 backdrop-blur-sm">
         <div className="w-full h-full flex flex-col">
           <SidebarContent />
         </div>
       </div>
-
-      {/* Mobile Header */}
+      {}
       <div className="md:hidden fixed top-0 w-full z-30 h-16 flex items-center justify-between px-4 bg-slate-900/90 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="p-1 bg-indigo-600">
@@ -89,8 +81,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
-
-      {/* Mobile Sidebar Overlay */}
+      {}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <div 
@@ -102,8 +93,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
       )}
-
-      {/* Main Content */}
+      {}
       <div className="flex-1 flex flex-col overflow-hidden relative z-10 pt-16 md:pt-0">
         <main className="flex-1 overflow-y-auto p-0 scroll-smooth">
           <div className="max-w-7xl mx-auto h-full p-4 md:p-8">
@@ -114,5 +104,4 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </div>
   );
 };
-
 export default Layout;

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import FileUploader from '../components/FileUploader';
 import { Loader2, Download, Settings } from 'lucide-react';
-
 const QrGenerator: React.FC = () => {
   const [url, setUrl] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
@@ -10,11 +9,9 @@ const QrGenerator: React.FC = () => {
   const [style, setStyle] = useState('square');
   const [logoSize, setLogoSize] = useState(30);
   const [loading, setLoading] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url) return;
-
     setLoading(true);
     const formData = new FormData();
     formData.append('url', url);
@@ -23,7 +20,6 @@ const QrGenerator: React.FC = () => {
     formData.append('style', style);
     formData.append('logoSize', logoSize.toString());
     if (logo) formData.append('logo', logo);
-
     try {
       const res = await fetch('/api/generate-qrcode', { method: 'POST', body: formData });
       if (!res.ok) throw new Error('Failed');
@@ -42,21 +38,18 @@ const QrGenerator: React.FC = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="max-w-5xl mx-auto pt-4">
       <div className="mb-8 border-l-4 border-slate-400 pl-6 py-2">
         <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">QR Code Matrix</h2>
         <p className="text-slate-400 font-mono text-sm">DATA ENCODING MODULE</p>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-slate-900 border border-white/10 p-8 relative">
-             {/* Tech deco */}
+             {}
             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20"></div>
             <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20"></div>
-
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-xs font-bold text-slate-400 mb-2 font-mono uppercase">Target URL</label>
@@ -69,7 +62,6 @@ const QrGenerator: React.FC = () => {
                   className="w-full px-4 py-3 bg-slate-800 border border-slate-600 text-white outline-none focus:border-white rounded-none font-mono"
                 />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 mb-2 font-mono uppercase">Foreground</label>
@@ -106,7 +98,6 @@ const QrGenerator: React.FC = () => {
                   </div>
                 </div>
               </div>
-
               <div>
                  <label className="block text-xs font-bold text-slate-400 mb-2 font-mono uppercase">Matrix Style</label>
                  <div className="flex gap-0 border border-slate-700">
@@ -125,12 +116,10 @@ const QrGenerator: React.FC = () => {
                     ))}
                  </div>
               </div>
-
               <div>
                 <label className="block text-xs font-bold text-slate-400 mb-2 font-mono uppercase">Logo Overlay (Optional)</label>
                 <FileUploader accept=".png,.jpg,.jpeg" onFileSelect={setLogo} helperText="IMG FORMAT: PNG/JPG" />
               </div>
-              
               {logo && (
                   <div>
                       <label className="block text-xs font-bold text-slate-400 mb-2 font-mono uppercase">Logo Scale ({logoSize}%)</label>
@@ -144,7 +133,6 @@ const QrGenerator: React.FC = () => {
                     />
                   </div>
               )}
-
               <button
                 type="submit"
                 disabled={loading}
@@ -156,8 +144,7 @@ const QrGenerator: React.FC = () => {
             </form>
           </div>
         </div>
-
-        {/* Preview / Info Section */}
+        {}
         <div className="lg:col-span-1">
             <div className="bg-slate-900 border border-white/10 text-white p-6 sticky top-6">
                 <div className="flex items-center gap-3 mb-4 border-b border-slate-700 pb-2">
@@ -176,5 +163,4 @@ const QrGenerator: React.FC = () => {
     </div>
   );
 };
-
 export default QrGenerator;

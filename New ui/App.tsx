@@ -6,15 +6,13 @@ import GenericFileTool from './pages/GenericFileTool';
 import { BaseConverter, CalculusTool } from './pages/MathTools';
 import QrGenerator from './pages/QrGenerator';
 import UnitConverter from './pages/UnitConverter';
-
 const App: React.FC = () => {
   return (
     <Router>
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          
-          {/* File Tools */}
+          {}
           <Route path="/doc-convert" element={
             <GenericFileTool 
               title="Document Converter" 
@@ -72,12 +70,10 @@ const App: React.FC = () => {
               }
              />
             } />
-
-          {/* Math Tools */}
+          {}
           <Route path="/base-convert" element={<BaseConverter />} />
           <Route path="/calculus" element={<CalculusTool />} />
-
-          {/* Utilities */}
+          {}
           <Route path="/qr-code" element={<QrGenerator />} />
           <Route path="/unit-convert" element={<UnitConverter />} />
         </Routes>
@@ -85,5 +81,4 @@ const App: React.FC = () => {
     </Router>
   );
 };
-
 export default App;

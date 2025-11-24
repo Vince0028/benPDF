@@ -1,18 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { Upload, File, X } from 'lucide-react';
-
 interface FileUploaderProps {
   accept: string;
   onFileSelect: (file: File) => void;
   label?: string;
   helperText?: string;
 }
-
 const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label = "Upload File", helperText }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -22,7 +19,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
       setDragActive(false);
     }
   };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,19 +27,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
       handleFile(e.dataTransfer.files[0]);
     }
   };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
   };
-
   const handleFile = (file: File) => {
     setSelectedFile(file);
     onFileSelect(file);
   };
-
   const clearFile = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -52,7 +45,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
       inputRef.current.value = '';
     }
   };
-
   return (
     <div className="w-full">
       <div
@@ -74,7 +66,6 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
           accept={accept}
           onChange={handleChange}
         />
-
         {selectedFile ? (
           <div className="flex items-center p-4 bg-slate-800 border border-slate-600 shadow-sm z-10 w-full max-w-md mx-4">
             <div className="p-2 bg-indigo-600 mr-3">
@@ -102,8 +93,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
             <p className="text-xs text-slate-500 px-4 font-mono">{helperText || `Supported: ${accept}`}</p>
           </div>
         )}
-        
-        {/* Tech Corners */}
+        {}
         <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-indigo-500/30"></div>
         <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-indigo-500/30"></div>
         <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-indigo-500/30"></div>
@@ -112,5 +102,4 @@ const FileUploader: React.FC<FileUploaderProps> = ({ accept, onFileSelect, label
     </div>
   );
 };
-
 export default FileUploader;
