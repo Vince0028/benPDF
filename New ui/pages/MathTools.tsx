@@ -1,6 +1,52 @@
 import React, { useState } from 'react';
 import { BaseConversionResponse, CalculusResponse } from '../types';
-import { Copy, ChevronDown } from 'lucide-react';
+import { Copy, ChevronDown, Check } from 'lucide-react';
+import 'katex/dist/katex.min.css';
+import katex from 'katex';
+
+const LatexRenderer = ({ latex }: { latex: string }) => {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (containerRef.current) {
+      try {
+        katex.render(latex, containerRef.current, {
+          throwOnError: false,
+          displayMode: true,
+        });
+      } catch (error) {
+        console.error("KaTeX rendering error:", error);
+        containerRef.current.innerText = latex; // Fallback
+      }
+    }
+  }, [latex]);
+
+  return <div ref={containerRef} />;
+};
+
+const CopyButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="p-1 hover:bg-slate-700 rounded transition-colors"
+      title="Copy to clipboard"
+    >
+      {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-slate-400" />}
+    </button>
+  );
+};
 
 export const BaseConverter: React.FC = () => {
   const [input, setInput] = useState('');
@@ -278,13 +324,26 @@ export const CalculusTool: React.FC = () => {
         {result && (
           <div className="mt-8 space-y-4 border-t border-slate-700 pt-6 animate-fade-in">
             <div className="bg-slate-800 border-l-4 border-orange-500 p-4">
-              <div className="text-xs font-mono text-orange-400 uppercase mb-1">Result (LaTeX)</div>
-              <div className="font-mono text-white text-lg overflow-x-auto">{result.result_latex}</div>
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-xs font-mono text-orange-400 uppercase">Result (Rendered)</div>
+                <CopyButton text={result.result_latex} />
+              </div>
+              <div className="overflow-x-auto py-2">
+                <LatexRenderer latex={result.result_latex} />
+              </div>
+              <div className="mt-2 text-xs text-slate-500 font-mono">
+                LaTeX: {result.result_latex}
+              </div>
             </div>
+
             <div className="bg-black/30 border border-slate-800 p-4">
-              <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Plain Result</div>
+              <div className="flex justify-between items-center mb-2 border-b border-slate-800 pb-2">
+                <div className="text-xs font-mono text-slate-500 uppercase">Plain Result</div>
+                <CopyButton text={result.result} />
+              </div>
               <div className="font-mono text-slate-300 text-sm">{result.result}</div>
             </div>
+
             <div className="bg-black/30 border border-slate-800 p-4">
               <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Computation Steps</div>
               <div className="space-y-1">
