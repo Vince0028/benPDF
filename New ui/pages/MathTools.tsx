@@ -167,6 +167,17 @@ export const CalculusTool: React.FC = () => {
     }
   };
 
+  const handleBackspace = () => {
+    const tokens = ['sqrt(', 'sin(', 'cos(', 'tan(', 'log(', 'exp(', 'pi'];
+    for (const token of tokens) {
+      if (expression.endsWith(token)) {
+        setExpression(prev => prev.slice(0, -token.length));
+        return;
+      }
+    }
+    setExpression(prev => prev.slice(0, -1));
+  };
+
   return (
     <div className="max-w-4xl mx-auto pt-4">
       <div className="mb-8 border-l-4 border-orange-500 pl-6 py-2">
@@ -202,71 +213,91 @@ export const CalculusTool: React.FC = () => {
               {['+', '-', '*', '/', '^', '(', ')', 'x', 'sin(', 'cos(', 'tan(', 'sqrt(', 'log(', 'exp(', 'pi'].map((sym) => (
                 <button
                   key={sym}
-                  type="text" value={variable} onChange={(e) => setVariable(e.target.value)}
-                  className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none"
-                />
-          </div>
-            {operation === 'derivative' ? (
-              <div>
-                <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Order</label>
-                <input
-                  type="number" min="1" value={order} onChange={(e) => setOrder(parseInt(e.target.value))}
-                  className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none"
-                />
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Lower Bound</label>
-                  <input
-                    type="text" placeholder="Optional" value={lower} onChange={(e) => setLower(e.target.value)}
-                    className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none placeholder-slate-600"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Upper Bound</label>
-                  <input
-                    type="text" placeholder="Optional" value={upper} onChange={(e) => setUpper(e.target.value)}
-                    className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none placeholder-slate-600"
-                  />
-                </div>
-              </>
-            )}
-            <div className={operation === 'derivative' ? 'col-span-2' : 'col-span-1'}>
-              <label className="block text-xs font-bold text-transparent mb-2 font-mono uppercase">.</label>
+                  onClick={() => setExpression(prev => prev + sym)}
+                  className="p-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 font-mono transition-colors"
+                >
+                  {sym}
+                </button>
+              ))}
               <button
-                onClick={handleCalculate}
-                disabled={loading || !expression}
-                className="w-full p-3 bg-orange-600 hover:bg-orange-500 text-white font-bold font-mono uppercase transition-colors rounded-none"
+                onClick={handleBackspace}
+                className="p-1 bg-red-900/30 hover:bg-red-900/50 text-xs text-red-400 border border-red-900/50 font-mono transition-colors"
               >
-                {loading ? '...' : 'CALCULATE'}
+                DEL
               </button>
             </div>
           </div>
+        </div>
 
-          {result && (
-            <div className="mt-8 space-y-4 border-t border-slate-700 pt-6 animate-fade-in">
-              <div className="bg-slate-800 border-l-4 border-orange-500 p-4">
-                <div className="text-xs font-mono text-orange-400 uppercase mb-1">Result (LaTeX)</div>
-                <div className="font-mono text-white text-lg overflow-x-auto">{result.result_latex}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div>
+            <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Variable</label>
+            <input
+              type="text" value={variable} onChange={(e) => setVariable(e.target.value)}
+              className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none"
+            />
+          </div>
+          {operation === 'derivative' ? (
+            <div>
+              <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Order</label>
+              <input
+                type="number" min="1" value={order} onChange={(e) => setOrder(parseInt(e.target.value))}
+                className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Lower Bound</label>
+                <input
+                  type="text" placeholder="Optional" value={lower} onChange={(e) => setLower(e.target.value)}
+                  className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none placeholder-slate-600"
+                />
               </div>
-              <div className="bg-black/30 border border-slate-800 p-4">
-                <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Plain Result</div>
-                <div className="font-mono text-slate-300 text-sm">{result.result}</div>
+              <div>
+                <label className="block text-xs font-bold text-orange-400 mb-2 font-mono uppercase">Upper Bound</label>
+                <input
+                  type="text" placeholder="Optional" value={upper} onChange={(e) => setUpper(e.target.value)}
+                  className="w-full p-3 bg-slate-800 border border-slate-600 text-white outline-none font-mono text-center focus:border-orange-500 rounded-none placeholder-slate-600"
+                />
               </div>
-              <div className="bg-black/30 border border-slate-800 p-4">
-                <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Computation Steps</div>
-                <div className="space-y-1">
-                  {result.steps.map((step, i) => (
-                    <div key={i} className="font-mono text-xs text-orange-300/70">
-                      {`> ${step}`}
-                    </div>
-                  ))}
-                </div>
+            </>
+          )}
+          <div className={operation === 'derivative' ? 'col-span-2' : 'col-span-1'}>
+            <label className="block text-xs font-bold text-transparent mb-2 font-mono uppercase">.</label>
+            <button
+              onClick={handleCalculate}
+              disabled={loading || !expression}
+              className="w-full p-3 bg-orange-600 hover:bg-orange-500 text-white font-bold font-mono uppercase transition-colors rounded-none"
+            >
+              {loading ? '...' : 'CALCULATE'}
+            </button>
+          </div>
+        </div>
+
+        {result && (
+          <div className="mt-8 space-y-4 border-t border-slate-700 pt-6 animate-fade-in">
+            <div className="bg-slate-800 border-l-4 border-orange-500 p-4">
+              <div className="text-xs font-mono text-orange-400 uppercase mb-1">Result (LaTeX)</div>
+              <div className="font-mono text-white text-lg overflow-x-auto">{result.result_latex}</div>
+            </div>
+            <div className="bg-black/30 border border-slate-800 p-4">
+              <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Plain Result</div>
+              <div className="font-mono text-slate-300 text-sm">{result.result}</div>
+            </div>
+            <div className="bg-black/30 border border-slate-800 p-4">
+              <div className="text-xs font-mono text-slate-500 uppercase mb-2 border-b border-slate-800 pb-2">Computation Steps</div>
+              <div className="space-y-1">
+                {result.steps.map((step, i) => (
+                  <div key={i} className="font-mono text-xs text-orange-300/70">
+                    {`> ${step}`}
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-      );
+    </div>
+  );
 };
