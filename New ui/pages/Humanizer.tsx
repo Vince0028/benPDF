@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Bot, User, Copy, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { Sparkles, Bot, User, Copy, Check, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 
 const Humanizer: React.FC = () => {
     const [inputText, setInputText] = useState('');
@@ -7,6 +7,7 @@ const Humanizer: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const [inputCopied, setInputCopied] = useState(false);
 
     const handleHumanize = async () => {
         if (!inputText.trim()) return;
@@ -45,6 +46,19 @@ const Humanizer: React.FC = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleCopyInput = () => {
+        if (!inputText) return;
+        navigator.clipboard.writeText(inputText);
+        setInputCopied(true);
+        setTimeout(() => setInputCopied(false), 2000);
+    };
+
+    const handleClear = () => {
+        setInputText('');
+        setError(null);
+        // Optionally clear output too? probably not, users might want to keep the result while clearing input.
+    };
+
     return (
         <div className="max-w-6xl mx-auto pt-4">
             {/* Header Section */}
@@ -53,7 +67,7 @@ const Humanizer: React.FC = () => {
                 <p className="text-slate-400 font-mono text-sm">NEURAL TEXT RE-SYNTHESIS MODULE</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-250px)] min-h-[500px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[calc(100vh-250px)] min-h-[600px]">
                 {/* Input Section */}
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-2">
@@ -61,7 +75,28 @@ const Humanizer: React.FC = () => {
                             <Bot size={16} />
                             Source Input (AI)
                         </label>
-                        <span className="text-xs text-slate-500 font-mono">{inputText.length} chars</span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-xs text-slate-500 font-mono">{inputText.length} chars</span>
+                            {inputText && (
+                                <div className="flex items-center gap-2 border-l border-slate-700 pl-3">
+                                    <button
+                                        onClick={handleCopyInput}
+                                        className="text-xs flex items-center gap-1 text-slate-400 hover:text-white transition-colors uppercase font-mono"
+                                        title="Copy Input"
+                                    >
+                                        {inputCopied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                                    </button>
+                                    <button
+                                        onClick={handleClear}
+                                        className="text-xs flex items-center gap-1 text-slate-400 hover:text-red-400 transition-colors uppercase font-mono"
+                                        title="Clear Input"
+                                    >
+                                        <Trash2 size={12} />
+                                        CLEAR
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="relative flex-1 bg-slate-900 border border-white/10 p-1 group focus-within:border-green-500/50 transition-colors">
                         {/* Decorators */}
@@ -100,7 +135,7 @@ const Humanizer: React.FC = () => {
                 </div>
 
                 {/* Output Section */}
-                <div className="flex flex-col h-full">
+                <div className="flex flex-col h-full mt-6 lg:mt-0">
                     <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-bold text-green-400 font-mono uppercase flex items-center gap-2">
                             <User size={16} />
@@ -109,10 +144,10 @@ const Humanizer: React.FC = () => {
                         {outputText && (
                             <button
                                 onClick={handleCopy}
-                                className="text-xs flex items-center gap-1 text-slate-400 hover:text-white transition-colors uppercase font-mono"
+                                className="text-xs flex items-center gap-1 bg-green-900/30 hover:bg-green-900/50 text-green-400 px-2 py-1 rounded transition-colors uppercase font-mono border border-green-500/30"
                             >
-                                {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                                {copied ? 'COPIED' : 'COPY_TEXT'}
+                                {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                                {copied ? 'COPIED' : 'COPY OUTPUT'}
                             </button>
                         )}
                     </div>
