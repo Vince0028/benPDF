@@ -75,6 +75,28 @@ const Humanizer: React.FC = () => {
                             onChange={(e) => setInputText(e.target.value)}
                         />
                     </div>
+
+                    <button
+                        onClick={handleHumanize}
+                        disabled={isLoading || !inputText.trim()}
+                        className="
+                            w-full mt-4 group relative overflow-hidden px-8 py-4 bg-green-600 hover:bg-green-500 
+                            text-white font-bold font-mono uppercase tracking-wider transition-all 
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800
+                        "
+                    >
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-shimmer"></div>
+                        <span className="relative flex items-center justify-center gap-3">
+                            {isLoading ? (
+                                <>Processing...</>
+                            ) : (
+                                <>
+                                    <Sparkles size={18} />
+                                    Execute Humanization
+                                </>
+                            )}
+                        </span>
+                    </button>
                 </div>
 
                 {/* Output Section */}
@@ -139,30 +161,7 @@ const Humanizer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="mt-6 flex justify-end">
-                <button
-                    onClick={handleHumanize}
-                    disabled={isLoading || !inputText.trim()}
-                    className="
-                        group relative overflow-hidden px-8 py-4 bg-green-600 hover:bg-green-500 
-                        text-white font-bold font-mono uppercase tracking-wider transition-all 
-                        disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800
-                    "
-                >
-                    <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-shimmer"></div>
-                    <span className="relative flex items-center gap-3">
-                        {isLoading ? (
-                            <>Processing...</>
-                        ) : (
-                            <>
-                                <Sparkles size={18} />
-                                Execute Humanization
-                            </>
-                        )}
-                    </span>
-                </button>
-            </div>
+
         </div>
     );
 };
