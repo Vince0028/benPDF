@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   FileText, Image as ImageIcon, Calculator, QrCode,
-  Scale, Binary, Scissors, ArrowRightLeft, ArrowRight, Wand2
+  Scale, Binary, Scissors, ArrowRightLeft, ArrowRight, Wand2,
+  Shield, EyeOff, Palette
 } from 'lucide-react';
 
 const tools = [
@@ -70,7 +71,8 @@ const tools = [
     icon: Calculator,
     color: 'text-orange-400',
     borderColor: 'hover:border-orange-500',
-    category: 'CALCULUS & DATA'
+    category: 'CALCULUS & DATA',
+    status: 'UNFINISHED'
   },
   {
     name: 'Base Converter',
@@ -89,6 +91,37 @@ const tools = [
     color: 'text-indigo-400',
     borderColor: 'hover:border-indigo-500',
     category: 'CALCULUS & DATA'
+  },
+  // PRIVACY & SECURITY
+  {
+    name: 'Password Gen',
+    desc: 'Generate secure hex/alpha passwords.',
+    path: '/password-gen',
+    icon: Shield,
+    color: 'text-rose-400',
+    borderColor: 'hover:border-rose-500',
+    category: 'PRIVACY & SECURITY'
+  },
+  {
+    name: 'Metadata Strip',
+    desc: 'Clean EXIF data from images.',
+    path: '/metadata-stripper',
+    icon: EyeOff,
+    color: 'text-amber-400',
+    borderColor: 'hover:border-amber-500',
+    category: 'PRIVACY & SECURITY',
+    status: 'IN PROGRESS'
+  },
+  // DESIGN TOOLS
+  {
+    name: 'Palette Gen',
+    desc: 'Modern schemes: Dark, Mint, Blue.',
+    path: '/palette-gen',
+    icon: Palette,
+    color: 'text-fuchsia-400',
+    borderColor: 'hover:border-fuchsia-500',
+    category: 'DESIGN TOOLS',
+    status: 'IN PROGRESS'
   },
   // UTILITIES
   {
@@ -138,7 +171,17 @@ const Dashboard: React.FC = () => {
                     <div className={`p-3 bg-white/5 border border-white/10 ${tool.color}`}>
                       <tool.icon size={24} />
                     </div>
-                    <ArrowRight className="text-slate-600 group-hover:text-white transition-colors transform group-hover:translate-x-1" size={20} />
+                    <div className="flex flex-col items-end gap-2">
+                      <ArrowRight className="text-slate-600 group-hover:text-white transition-colors transform group-hover:translate-x-1" size={20} />
+                      {tool.status && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 border ${tool.status === 'UNFINISHED'
+                          ? 'border-rose-500/50 text-rose-500 bg-rose-500/10'
+                          : 'border-amber-500/50 text-amber-500 bg-amber-500/10'
+                          }`}>
+                          {tool.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <h3 className="text-xl font-bold text-white mb-2 font-mono uppercase">{tool.name}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed">

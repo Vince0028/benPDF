@@ -7,6 +7,9 @@ import { BaseConverter, CalculusTool } from './pages/MathTools';
 import QrGenerator from './pages/QrGenerator';
 import UnitConverter from './pages/UnitConverter';
 import Humanizer from './pages/Humanizer';
+import PaletteGenerator from './pages/PaletteGenerator';
+import PasswordGenerator from './pages/PasswordGenerator';
+import MetadataStripper from './pages/MetadataStripper';
 
 const App: React.FC = () => {
   return (
@@ -16,7 +19,14 @@ const App: React.FC = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/humanizer" element={<Humanizer />} />
 
-          { }
+          {/* Privacy & Security */}
+          <Route path="/password-gen" element={<PasswordGenerator />} />
+          <Route path="/metadata-stripper" element={<MetadataStripper />} />
+
+          {/* Design Tools */}
+          <Route path="/palette-gen" element={<PaletteGenerator />} />
+
+          {/* PDF & Writing (Generic) */}
           <Route path="/doc-convert" element={
             <GenericFileTool
               title="Document Converter"

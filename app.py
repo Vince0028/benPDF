@@ -1022,6 +1022,49 @@ def remove_background_api():
         return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
 
 
+@app.route('/api/strip-metadata', methods=['POST'])
+def strip_metadata_api():
+    logger.info("Received request for metadata stripping.")
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded.'}), 400
+    
+    file = request.files['file']
+    if not file or file.filename == '':
+        return jsonify({'error': 'No file selected.'}), 400
+
+    filename = file.filename
+    ext = os.path.splitext(filename)[1].lower()
+
+    try:
+        if ext in ['.jpg', '.jpeg', '.png', '.webp', '.tiff']:
+            logger.info(f"Stripping metadata from image: {filename}")
+            img = Image.open(file.stream)
+            
+            # Create a clean image without EXIF/metadata
+            data = list(img.getdata())
+            clean_img = Image.new(img.mode, img.size)
+            clean_img.putdata(data)
+            
+            output_buffer = io.BytesIO()
+            clean_img.save(output_buffer, format=img.format if img.format else 'PNG')
+            output_buffer.seek(0)
+            
+            return send_file(
+                output_buffer,
+                mimetype=f'image/{img.format.lower() if img.format else "png"}',
+                as_attachment=True,
+                download_name=f"clean_{filename}"
+            )
+        else:
+            # Placeholder for video or other formats (In Progress)
+            logger.warning(f"Metadata stripping not yet implemented for extension: {ext}")
+            return jsonify({'error': f'Metadata stripping for {ext} is currently in progress. Only images are supported for now.'}), 501
+            
+    except Exception as e:
+        logger.exception(f"Error stripping metadata from {filename}")
+        return jsonify({'error': f'Failed to strip metadata: {e}'}), 500
+
+
 
 from dotenv import load_dotenv
 import google.generativeai as genai

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  FileText, Image as ImageIcon, Calculator, QrCode,
+  FileText, ImageIcon, Calculator, QrCode,
   Scale, FileJson, Menu, X, Binary, Scissors, ArrowRightLeft,
-  Wand2, ChevronDown, ChevronRight, Snowflake
+  Wand2, ChevronDown, ChevronRight, Snowflake,
+  Shield, EyeOff, Palette
 } from 'lucide-react';
 
 const SNOWFLAKES = [...Array(50)].map((_, i) => ({
@@ -46,6 +47,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     'PDF & WRITING': true,
     'IMAGE PROCESSING': false,
     'CALCULUS & DATA': false,
+    'PRIVACY & SECURITY': false,
+    'DESIGN TOOLS': false,
     'UTILITIES': false,
   });
 
@@ -63,9 +66,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { label: 'Calculus', path: '/calculus', icon: <Calculator size={18} />, category: 'CALCULUS & DATA' },
     { label: 'QR Generator', path: '/qr-code', icon: <QrCode size={18} />, category: 'UTILITIES' },
     { label: 'Unit Converter', path: '/unit-convert', icon: <Scale size={18} />, category: 'CALCULUS & DATA' },
+    // PRIVACY & SECURITY
+    { label: 'Password Gen', path: '/password-gen', icon: <Shield size={18} />, category: 'PRIVACY & SECURITY' },
+    { label: 'Metadata Strip', path: '/metadata-stripper', icon: <EyeOff size={18} />, category: 'PRIVACY & SECURITY' },
+    // DESIGN TOOLS
+    { label: 'Palette Gen', path: '/palette-gen', icon: <Palette size={18} />, category: 'DESIGN TOOLS' },
   ];
 
-  const categories = ['PDF & WRITING', 'IMAGE PROCESSING', 'CALCULUS & DATA', 'UTILITIES'];
+  const categories = ['PDF & WRITING', 'IMAGE PROCESSING', 'CALCULUS & DATA', 'PRIVACY & SECURITY', 'DESIGN TOOLS', 'UTILITIES'];
 
   const isActive = (path: string) => location.pathname === path;
 
