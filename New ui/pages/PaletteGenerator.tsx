@@ -2,17 +2,17 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Palette, Copy, CheckCircle2, RefreshCw, Hash, Download, Image as ImageIcon, Terminal, ExternalLink, Code, Database, Monitor } from 'lucide-react';
 
 const PALETTE_PRESETS = {
-    'DARK_MODE': { hue: [200, 260], sat: [10, 30], lum: [10, 20] },
-    'MINT_TEA': { hue: [140, 170], sat: [30, 60], lum: [70, 90] },
-    'OCEAN_BLUE': { hue: [190, 230], sat: [50, 80], lum: [30, 60] },
-    'NEON_CYBER': { hue: [280, 320], sat: [80, 100], lum: [40, 60] },
-    'PASTEL_VIBE': { hue: [0, 360], sat: [20, 40], lum: [80, 95] },
+    'DARK_MODE': { hue: [200, 260], sat: [15, 40], lum: [5, 45] },
+    'MINT_TEA': { hue: [140, 170], sat: [20, 70], lum: [30, 95] },
+    'OCEAN_BLUE': { hue: [190, 240], sat: [40, 90], lum: [10, 85] },
+    'NEON_CYBER': { hue: [180, 340], sat: [70, 100], lum: [20, 80] },
+    'PASTEL_VIBE': { hue: [0, 360], sat: [10, 50], lum: [60, 98] },
 };
 
 const PaletteGenerator: React.FC = () => {
     const [palettes, setPalettes] = useState<string[][]>([]);
     const [activeCategory, setActiveCategory] = useState<keyof typeof PALETTE_PRESETS | 'ALL'>('ALL');
-    const [previewPalette, setPreviewPalette] = useState<string[]>(['#0F172A', '#1E293B', '#334155', '#38BDF8', '#F1F5F9']);
+    const [previewPalette, setPreviewPalette] = useState<string[]>(['#020617', '#1E293B', '#334155', '#38BDF8', '#F8FAFC']);
     const [extractedPalette, setExtractedPalette] = useState<string[]>([]);
     const [copiedColor, setCopiedColor] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
@@ -41,13 +41,22 @@ const PaletteGenerator: React.FC = () => {
             const preset = PALETTE_PRESETS[catKey];
             const baseHue = Math.floor(Math.random() * (preset.hue[1] - preset.hue[0] + 1)) + preset.hue[0];
 
-            const palette = [];
-            for (let j = 0; j < 5; j++) {
-                const h = (baseHue + (j * 15)) % 360;
+            // Smart Spread: Force a range of lightness levels to ensure high contrast
+            // [Background, Surface, Mid, Accent, Text/Highlight]
+            const lightnessSteps = [
+                Math.floor(Math.random() * (preset.lum[0] + (preset.lum[1] - preset.lum[0]) * 0.2)), // Low
+                Math.floor(preset.lum[0] + (preset.lum[1] - preset.lum[0]) * 0.4),                // Mid-Low
+                Math.floor(preset.lum[0] + (preset.lum[1] - preset.lum[0]) * 0.6),                // Mid
+                Math.floor(preset.lum[0] + (preset.lum[1] - preset.lum[0]) * 0.8),                // Mid-High
+                Math.floor(Math.random() * (preset.lum[1] - preset.lum[1] * 0.1) + preset.lum[1] * 0.1) // High
+            ].sort((a, b) => a - b);
+
+            const palette = lightnessSteps.map((l, index) => {
+                const h = (baseHue + (index * 12)) % 360;
                 const s = Math.floor(Math.random() * (preset.sat[1] - preset.sat[0] + 1)) + preset.sat[0];
-                const l = Math.floor(Math.random() * (preset.lum[1] - preset.lum[0] + 1)) + preset.lum[0];
-                palette.push(hslToHex(h, s, l));
-            }
+                return hslToHex(h, s, l);
+            });
+
             newPalettes.push(palette);
         }
         setPalettes(newPalettes);
