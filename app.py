@@ -1051,13 +1051,45 @@ def humanize_text_api():
     text_to_humanize = data['text']
     
     try:
+        # High entropy config for bursting perplexity
+        generation_config = genai.types.GenerationConfig(
+            temperature=0.9, 
+            top_p=0.95,
+            top_k=50,
+        )
+
         model = genai.GenerativeModel('gemini-pro')
-        prompt = f"Rewrite the following text to sound more natural and human-like, removing any robotic or AI-generated tone. Maintain the original meaning but improve flow and readability:\n\n{text_to_humanize}"
         
-        response = model.generate_content(prompt)
-        humanized_text = response.text
+        system_instruction = """
+        Role: You are a casual, real human writing online. You are NOT an AI assistant. You are raw, authentic, and slightly imperfect. You hate formal writing.
+
+        Strict Style Guide (Follow these or fail):
+        1. **NO Apostrophes**: Remove apostrophes from contractions. Write "dont" instead of "don't", "whats" instead of "what's", "im" instead of "I'm", "cant" instead of "can't", "youre" instead of "you're".
+        2. **Extreme Informalism**: Write like you're texting a friend or posting on a forum. Use lowercase for occasional emphasis or laziness.
+        3. **Micro-Imperfections**: Intentional minor grammar slips or run-on sentences are GOOD. They prove you aren't an AI.
+        4. **Burstiness**: Switch between short, punchy fragments and longer, rambling thoughts.
+        5. **NO AI PATTERNS**: See the banned list below.
+
+        BANNED WORD LIST (Strictly Forbidden):
+        delve, embark, tapestry, realm, unlocking, unleash, intricate, pivotal, landscape, testament, comprehensive, foster, demystify, game-changer, elevate, revolutionize, 
+        orchestrate, symphony, leverage, underscores, esteemed, shed light, craft, crafting, imagine, remarkable, it remains to be seen, glimpse, discover, skyrocket, abyss, 
+        not alone, innovative, disruptive, utilize, utilizing, illuminate, unveil, elucidate, paradigm, harness, groundbreaking, opened up, inquiring, exploration, 
+        in summary, in conclusion, most importantly, firstly, secondly, furthermore, moreover, consequently, keen, vital, crucial.
         
-        return jsonify({'result': humanized_text}), 200
+        Also minimize use of filler words like: basically, actually, literally, very, really.
+        
+        Input Text:
+        """
+        
+        final_prompt = f"{system_instruction}\n{text_to_humanize}"
+        
+        response = model.generate_content(final_prompt, generation_config=generation_config)
+        
+        if response.text:
+            return jsonify({'result': response.text}), 200
+        else:
+            return jsonify({'error': "Model returned empty response"}), 500
+            
     except Exception as e:
         logger.exception("Error during humanization:")
         return jsonify({'error': f"Failed to humanize text: {str(e)}"}), 500
@@ -1065,17 +1097,17 @@ def humanize_text_api():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    # Ensure FRONTEND_DIST is absolute
+    
     abs_frontend_dist = os.path.abspath(FRONTEND_DIST)
     
     if path != "" and os.path.exists(os.path.join(abs_frontend_dist, path)):
         return send_from_directory(abs_frontend_dist, path)
     
-    # Fallback to index.html for SPA routing
+    
     return send_from_directory(abs_frontend_dist, 'index.html')
 
 if __name__ == '__main__':
-    # ... existing main block ...
+   
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
