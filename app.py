@@ -1056,14 +1056,23 @@ def humanize_text_api():
         
         STORYTELLING & RESTATEMENT RULE: 
         1. Explaining pattern: When you make a point, explain it normally once. 
-        2. IMMEDIATELY RESTATE IT: Follow up by saying the exact same thing but in a completely different way (e.g., "Essentially, X. Or to put it another way, Y."). This mimicking of "human redundancy" is key.
+        2. IMMEDIATELY RESTATE IT: Follow up by saying the exact same thing but in a completely different way (e.g., "Essentially, X. Or to put it another way, Y."). 
         
         ANTI-STRUCTURE & CHAOS:
         1. **No Formula**: Do not follow a logical flow. Jump between ideas. 
         2. **Syntactic Chaos**: Use sentence fragments. Mix long run-ons with 2-word sentences. DO NOT use em-dashes (—).
         3. **Non-Linear**: Don't build an argument. Just state things as they pop into your head.
 
-        VARIATION RULE: If the input text already looks informal or humanized, EVOLVE IT. Don't just swap words; change the entire angle of the thought while keeping the meaning.
+        VARIATION RULE: If the input text already looks informal (no caps, no apostrophes), YOU MUST RE-ENVISION THE ENTIRE THOUGHT. Do not reuse a single sentence structure. Start from a different angle entirely.
+
+        STRICT ANTI-GRAMMAR (CRITICAL):
+        1. **NO APOSTROPHES**: Never use ' in any word except "y'know" and "ai's".
+           - WRONG: we're, it's, isn't, there's, shouldn't, didn't, i'm, don't.
+           - RIGHT: were, its, isnt, theres, shouldnt, didnt, i, dont.
+        2. **NO COMMAS AFTER Y'KNOW**: 
+           - WRONG: "y'know, it brings up..."
+           - RIGHT: "y'know it brings up..."
+        3. **LOW-CAPS**: Use lowercase for "i" and at the start of most sentences if they flow as one thought.
 
         Strict Style Guide:
         1.  **NO Intro/Outro**: Do not start with "In today's world" or "So basically". Start in the middle of a thought. Do not summarize at the end.
@@ -1072,7 +1081,6 @@ def humanize_text_api():
         4.  **Natural Flow**: 
             - Don't start every sentence with "And" or "So" (it looks robotic).
             - Use commas to connect thoughts naturally.
-            - **CRITICAL**: NEVER put a comma after "y'know". Use it like "y'know I was thinking" NOT "y'know, I was thinking".
         5.  **Vocabulary**: 
             - Use normal, simple words. 
             - Avoid "stuff" and "things" repetition, but don't force slang.
@@ -1080,9 +1088,6 @@ def humanize_text_api():
             - **BANNED**: "You gotta", "You have to", "Remember that", "I reckon". (Don't preach).
             - **USE**: "It feels like", "Seems to me", "Most people just", "I guess".
         7.  **Typing Style**:
-            - **STRICT NO APOSTROPHES**: (theres, its, isnt, lets, cant, im, dont, species, thatll).
-            - Exception: Only **y'know**, **ai's**.
-            - lowercase "i".
             - "cause" instead of "because".
         8.  **Specific Banned Words**:
             yo, chill, vibes, totally, massive, game-changer, unleash, tapestry, realm, intricate, pivotal, landscape, foster, demystify, elevate, revolutionize, 
@@ -1182,9 +1187,13 @@ def humanize_text_api():
         temperature = 0.9  # Increased for more variation
     else:
         system_instruction = instruction_informal
-        temperature = 1.2  # Increased for maximum variation
+        temperature = 1.3  # Further increased for variability
 
-    final_prompt = f"{system_instruction}\n\nHumanize this text to match the strict persona above:\n{text_to_humanize}"
+    # Detect if the input is already humanized to force a variation pass
+    is_humanized = (text_to_humanize.lower() == text_to_humanize) and ("'" not in text_to_humanize)
+    variation_prompt = "\n\nCRITICAL: This text already looks humanized. REDO IT COMPLETELY. Change the structure, start with a different point, use different words. DO NOT produce anything similar to the input." if is_humanized else ""
+
+    final_prompt = f"{system_instruction}{variation_prompt}\n\nHumanize this text to match the strict persona above:\n{text_to_humanize}"
     
     
     try:
