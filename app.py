@@ -1065,7 +1065,10 @@ def humanize_text_api():
         2. **Run-on Sentences**: Connect thoughts with "and" or just put them next to each other. Don't use perfect transition words like "Furthermore" or "Moreover".
         3. **Lowercase 'ai'**: Always "ai". Never "AI".
         4. **Natural Typos/Style**:
-           - No apostrophes (dont, cant, its).
+           - No apostrophes (dont, cant, its, im).
+           - **EXCEPTIONS**: 
+             * Use "y'know" (specifically with the apostrophe).
+             * Use "ai's" for possessive (e.g. "ai's power").
            - "i" can be lowercase sometimes.
            - Use "kinda" instead of "kind of".
            - Use "cause" instead of "because".
