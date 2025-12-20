@@ -3,11 +3,45 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FileText, Image as ImageIcon, Calculator, QrCode,
   Scale, FileJson, Menu, X, Binary, Scissors, ArrowRightLeft,
-  Wand2, ChevronDown, ChevronRight
+  Wand2, ChevronDown, ChevronRight, Snowflake
 } from 'lucide-react';
+
+const SNOWFLAKES = [...Array(50)].map((_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  delay: `${Math.random() * 10}s`,
+  shakeDelay: `${Math.random() * 2}s`,
+  opacity: Math.random() * 0.7 + 0.3,
+  size: `${Math.random() * 1.2 + 0.5}em`,
+  duration: `${Math.random() * 5 + 7}s`
+}));
+
+const SnowOverlay: React.FC<{ isSnowing: boolean }> = ({ isSnowing }) => {
+  if (!isSnowing) return null;
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden">
+      {SNOWFLAKES.map((s) => (
+        <div
+          key={s.id}
+          className="snowflake"
+          style={{
+            left: s.left,
+            animationDelay: `${s.delay}, ${s.shakeDelay}`,
+            animationDuration: `${s.duration}, 3s`,
+            opacity: s.opacity,
+            fontSize: s.size
+          }}
+        >
+          ❅
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSnowing, setIsSnowing] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'PDF & WRITING': true,
     'IMAGE PROCESSING': false,
@@ -106,10 +140,31 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           );
         })}
       </nav>
+
+      {/* Snow Toggle */}
+      <div className="p-4 border-t border-white/10 bg-slate-900/50">
+        <button
+          onClick={() => setIsSnowing(!isSnowing)}
+          className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all duration-300 ${isSnowing
+            ? 'bg-indigo-600/20 border-indigo-500/50 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+            : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'
+            }`}
+        >
+          <div className="flex items-center gap-3">
+            <Snowflake size={18} className={isSnowing ? 'animate-spin-slow' : ''} />
+            <span className="text-xs font-bold uppercase tracking-widest">Snow Mode</span>
+          </div>
+          <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${isSnowing ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+            <div className={`absolute top-1 w-2 h-2 bg-white rounded-full transition-all duration-300 ${isSnowing ? 'left-5' : 'left-1'}`}></div>
+          </div>
+        </button>
+      </div>
     </div>
   );
+
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden relative font-sans selection:bg-indigo-500/30">
+      <SnowOverlay isSnowing={isSnowing} />
       { }
       <div className="fixed inset-0 z-0 bg-grid pointer-events-none opacity-30"></div>
       { }
