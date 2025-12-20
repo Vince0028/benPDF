@@ -18,12 +18,7 @@ from sympy.core.add import Add
 from sympy.core.mul import Mul
 from sympy.parsing.sympy_parser import standard_transformations, implicit_multiplication_application, convert_xor, parse_expr
 
-try:
-    from rembg import remove as rembg_remove
-    REMBG_AVAILABLE = True
-except ImportError:
-    REMBG_AVAILABLE = False
-    logging.warning("rembg not available. Background removal feature will be disabled.")
+
 
 if sys.platform == "win32":
     try:
@@ -957,8 +952,10 @@ def healthz():
 def remove_background_api():
     logger.info("Received request for background removal.")
     
-    if not REMBG_AVAILABLE:
-        return jsonify({'error': 'Background removal feature is not available. Please install rembg: pip install rembg'}), 503
+    try:
+        from rembg import remove as rembg_remove
+    except ImportError:
+         return jsonify({'error': 'Background removal feature is not available. Please install rembg: pip install rembg'}), 503
     
     file = None
     image_url = None
@@ -1077,9 +1074,7 @@ def humanize_text_api():
         delve, embark, tapestry, realm, unlocking, unleash, intricate, pivotal, landscape, testament, comprehensive, foster, demystify, game-changer, elevate, revolutionize, 
         orchestrate, symphony, leverage, underscores, esteemed, shed light, craft, crafting, imagine, remarkable, it remains to be seen, glimpse, discover, skyrocket, abyss, 
         not alone, innovative, dived, deeper, moreover, furthermore, in conclusion, ultimately.
-        """
-        Input Text:
-        """
+
         
         final_prompt = f"{system_instruction}\n{text_to_humanize}"
         
