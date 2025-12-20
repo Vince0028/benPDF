@@ -41,6 +41,6 @@ Thumbs.db
 htmlcov/
 
 
-dist/
+
 build/
 *.egg-info/
