@@ -1025,15 +1025,57 @@ def remove_background_api():
         return jsonify({'error': f'An unexpected error occurred: {e}'}), 500
 
 
+
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+load_dotenv()
+
+# Configure Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_HUMANIZER")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    logging.warning("GEMINI_HUMANIZER environment variable not set. Humanizer feature will not work.")
+
+@app.route('/api/humanize', methods=['POST'])
+def humanize_text_api():
+    logger.info("Received request for text humanization.")
+    if not GEMINI_API_KEY:
+        return jsonify({'error': 'Humanizer service not configured (missing API key).'}), 503
+
+    data = request.get_json()
+    if not data or 'text' not in data:
+        return jsonify({'error': 'No text provided.'}), 400
+
+    text_to_humanize = data['text']
+    
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        prompt = f"Rewrite the following text to sound more natural and human-like, removing any robotic or AI-generated tone. Maintain the original meaning but improve flow and readability:\n\n{text_to_humanize}"
+        
+        response = model.generate_content(prompt)
+        humanized_text = response.text
+        
+        return jsonify({'result': humanized_text}), 200
+    except Exception as e:
+        logger.exception("Error during humanization:")
+        return jsonify({'error': f"Failed to humanize text: {str(e)}"}), 500
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(os.path.join(FRONTEND_DIST, path)):
-        return send_from_directory(FRONTEND_DIST, path)
-    return send_from_directory(FRONTEND_DIST, 'index.html')
+    # Ensure FRONTEND_DIST is absolute
+    abs_frontend_dist = os.path.abspath(FRONTEND_DIST)
+    
+    if path != "" and os.path.exists(os.path.join(abs_frontend_dist, path)):
+        return send_from_directory(abs_frontend_dist, path)
+    
+    # Fallback to index.html for SPA routing
+    return send_from_directory(abs_frontend_dist, 'index.html')
 
 if __name__ == '__main__':
-    import os
+    # ... existing main block ...
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
