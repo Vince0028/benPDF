@@ -9,6 +9,8 @@ const Humanizer: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [inputCopied, setInputCopied] = useState(false);
 
+    const [mode, setMode] = useState<'informal' | 'formal'>('informal');
+
     const handleHumanize = async () => {
         if (!inputText.trim()) return;
 
@@ -22,7 +24,7 @@ const Humanizer: React.FC = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ text: inputText }),
+                body: JSON.stringify({ text: inputText, mode }),
             });
 
             if (!response.ok) {
@@ -62,9 +64,33 @@ const Humanizer: React.FC = () => {
     return (
         <div className="max-w-6xl mx-auto pt-4">
             {/* Header Section */}
-            <div className="mb-8 border-l-4 border-green-500 pl-6 py-2">
-                <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">AI Humanizer</h2>
-                <p className="text-slate-400 font-mono text-sm">NEURAL TEXT RE-SYNTHESIS MODULE</p>
+            <div className="mb-8 flex items-end justify-between border-l-4 border-green-500 pl-6 py-2">
+                <div>
+                    <h2 className="text-3xl font-bold text-white mb-2 font-mono uppercase tracking-tight">AI Humanizer</h2>
+                    <p className="text-slate-400 font-mono text-sm">NEURAL TEXT RE-SYNTHESIS MODULE</p>
+                </div>
+
+                {/* Mode Toggles */}
+                <div className="flex bg-slate-800 p-1 rounded-lg border border-white/10">
+                    <button
+                        onClick={() => setMode('informal')}
+                        className={`px-4 py-2 rounded font-mono text-xs uppercase tracking-wider transition-all ${mode === 'informal'
+                                ? 'bg-green-500 text-slate-900 font-bold shadow-lg shadow-green-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        Informal
+                    </button>
+                    <button
+                        onClick={() => setMode('formal')}
+                        className={`px-4 py-2 rounded font-mono text-xs uppercase tracking-wider transition-all ${mode === 'formal'
+                                ? 'bg-blue-500 text-slate-900 font-bold shadow-lg shadow-blue-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        Formal
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:h-[calc(100vh-250px)] min-h-[600px]">

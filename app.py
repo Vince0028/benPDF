@@ -1047,17 +1047,10 @@ def humanize_text_api():
 
     text_to_humanize = data['text']
     
-    try:
-        # High entropy config for bursting perplexity
-        generation_config = genai.types.GenerationConfig(
-            temperature=0.9, 
-            top_p=0.95,
-            top_k=50,
-        )
-
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        system_instruction = """
+    mode = data.get('mode', 'informal')
+    
+    # INFORMAL PERSONA (The "Regular Guy")
+    instruction_informal = """
         Role: You are a regular guy typing on a keyboard. You are NOT excited. You are NOT trying to be cool. You just write what you think in a flat, direct way.
 
         Strict Style Guide:
@@ -1074,15 +1067,42 @@ def humanize_text_api():
            - Use "cause" instead of "because".
         5. **Avoid Emphasis**: Don't use bolding or italics. Don't use exclamation marks! Just use periods.
 
-        BANNED WORD LIST:
+        BANNED WORD LIST (Informal):
         yo, chill, vibes, totally, massive, game-changer, unleash, tapestry, realm, intricate, pivotal, landscape, testament, foster, demystify, elevate, revolutionize, 
         orchestrate, symphony, leverage, underscores, esteemed, shed light, craft, crafting, imagine, remarkable, it remains to be seen, glimpse, discover, skyrocket, abyss, 
         not alone, innovative, dived, deeper, moreover, furthermore, in conclusion, ultimately, significant, crucial, era, bustling, undoubtedly.
-        """
+    """
 
-        
-        final_prompt = f"{system_instruction}\n{text_to_humanize}"
-        
+    # FORMAL PERSONA (The "Academic Student")
+    instruction_formal = """
+        Role: You are a university student writing a strict formal academic essay. You use complex sentence structures, relative clauses, and precise vocabulary. You are objective and analytical.
+
+        Strict Style Guide:
+        1. **Complex Sentence Structure**: Use long sentences with relative clauses (e.g., "technology which is marked by...", "a mechanism that emphasizes...").
+        2. **Formal Transitions**: You MUST use formal transition words: "Moreover", "In conclusion", "Furthermore", "Besides that", "It is necessary to remember", "Consequently".
+        3. **Wordiness**: It is okay to be slightly verbose. Use phrases like "in this regard", "at the same time", "marked with its pace".
+        4. **Grammar**: Perfect grammar. Capitalize 'AI' correctly. Use proper punctuation.
+        5. **Vocabulary**: Use words like "advancement", "facilitates", "streamlined", "prominent", "ethical implications", "interconnected".
+        6. **Tone**: Objective, serious, and professional. NO slang. NO simple contractions (use "it is" instead of "it's").
+
+        Note: You are trying to sound like a smart student who studies hard.
+    """
+
+    if mode == 'formal':
+        system_instruction = instruction_formal
+    else:
+        system_instruction = instruction_informal
+
+    final_prompt = f"{system_instruction}\n\nHumanize this text to match the strict persona above:\n{text_to_humanize}"
+    
+    try:
+        # High entropy config for bursting perplexity
+        generation_config = genai.types.GenerationConfig(
+            temperature=1.0 if mode == 'informal' else 0.7, # Higher temp for informal chaos, lower for clear formal structure
+            top_p=0.95,
+            top_k=50,
+        )
+
         response = model.generate_content(final_prompt, generation_config=generation_config)
         
         if response.text:
