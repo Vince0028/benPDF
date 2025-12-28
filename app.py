@@ -1040,7 +1040,7 @@ def strip_metadata_api():
             logger.info(f"Stripping metadata from image: {filename}")
             img = Image.open(file.stream)
             
-            # Create a clean image without EXIF/metadata
+       
             data = list(img.getdata())
             clean_img = Image.new(img.mode, img.size)
             clean_img.putdata(data)
@@ -1056,7 +1056,7 @@ def strip_metadata_api():
                 download_name=f"clean_{filename}"
             )
         else:
-            # Placeholder for video or other formats (In Progress)
+            
             logger.warning(f"Metadata stripping not yet implemented for extension: {ext}")
             return jsonify({'error': f'Metadata stripping for {ext} is currently in progress. Only images are supported for now.'}), 501
             
@@ -1071,7 +1071,7 @@ import google.generativeai as genai
 
 load_dotenv()
 
-# Configure Gemini
+
 GEMINI_API_KEY = os.getenv("GEMINI_HUMANIZER")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -1224,15 +1224,12 @@ def humanize_text_api():
 
     if mode == 'formal':
         system_instruction = instruction_formal
-        temperature = 0.9  # Increased for more variation
+        temperature = 0.9  
     else:
         system_instruction = instruction_informal
-        temperature = 1.3  # Further increased for variability
+        temperature = 1.3  
 
-    # Detect if the input looks like its already humanized
-    # 1. Casual tone detected by "y'know"
-    # 2. No caps
-    # 3. Very high character count (often happens with restatements)
+   
     is_humanized = ("y'know" in text_to_humanize.lower()) or (text_to_humanize.lower() == text_to_humanize) or (len(text_to_humanize) > 500 and mode == 'informal')
     variation_prompt = "\n\nCRITICAL: This text is ALREADY HUMANIZED. DO NOT reuse any phrasing. RE-WRITE IT FROM SCRATCH. Each version must be unique. Change the order of points." if is_humanized else ""
 
@@ -1240,9 +1237,9 @@ def humanize_text_api():
     
     
     try:
-        # High entropy config for bursting perplexity
+        
         generation_config = genai.types.GenerationConfig(
-            temperature=temperature, # Use the dynamically set temperature
+            temperature=temperature, 
             top_p=0.95,
             top_k=50,
         )
@@ -1257,15 +1254,15 @@ def humanize_text_api():
     except Exception as e:
         error_str = str(e)
         
-        # Check if it's a quota exceeded error
+       
         if "429" in error_str or "quota" in error_str.lower() or "Quota exceeded" in error_str:
             logger.warning(f"Quota exceeded for gemini-2.5-flash, trying fallback models...")
             
-            # Try multiple fallback models in order
+            
             fallback_models = [
-                'gemini-2.5-flash-lite',  # Similar quality, different quota
-                'gemini-3-flash',         # Newer model with separate quota
-                'gemini-1.5-flash-002',   # Older stable version
+                'gemini-2.5-flash-lite', 
+                'gemini-3-flash',         
+                'gemini-1.5-flash-002',   
             ]
             
             for fallback_name in fallback_models:
@@ -1285,10 +1282,9 @@ def humanize_text_api():
                     logger.warning(f"Fallback model {fallback_name} failed: {str(fallback_error)}, trying next...")
                     continue
             
-            # All models failed
             return jsonify({'error': f"All models exhausted. Primary quota exceeded. Try again later or upgrade your API plan."}), 429
         
-        # If it's not a quota error, return the original error
+        
         logger.exception("Error during humanization:")
         return jsonify({'error': f"Failed to humanize text: {error_str}"}), 500
 
